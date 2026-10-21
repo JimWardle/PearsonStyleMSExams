@@ -1,0 +1,1854 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cert Practice Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&family=Schibsted+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light}
+body{margin:0}
+[hidden]{display:none!important}
+
+/* Layout: one narrow column that behaves like an exam screen. Status line, question card, diff-style feedback, question map. Progress view reuses the same rows and tokens. */
+:root{
+  --bg:#f1f5f8;--surface:#ffffff;--fg:#12202b;--muted:#566776;--line:#d2dbe3;
+  --accent:#0a6a94;--accent-fg:#ffffff;--accent-soft:#e0eff6;
+  --good:#17692f;--good-bg:#e3f4e7;--bad:#a42a20;--bad-bg:#fbe8e6;--warn:#8a5a00;--warn-bg:#fcf0d3;
+  --font-display:"Schibsted Grotesk",system-ui,sans-serif;
+  --font-body:"Public Sans",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d151c;--surface:#151f28;--fg:#e5edf3;--muted:#8ea0af;--line:#2a3845;
+  --accent:#4db3d9;--accent-fg:#06222d;--accent-soft:#12303d;
+  --good:#5fd47a;--good-bg:#12301c;--bad:#ff8a80;--bad-bg:#3a1816;--warn:#e6b84a;--warn-bg:#3a2f10;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d151c;--surface:#151f28;--fg:#e5edf3;--muted:#8ea0af;--line:#2a3845;
+  --accent:#4db3d9;--accent-fg:#06222d;--accent-soft:#12303d;
+  --good:#5fd47a;--good-bg:#12301c;--bad:#ff8a80;--bad-bg:#3a1816;--warn:#e6b84a;--warn-bg:#3a2f10;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--font-body)}
+.wrap{max-width:760px;margin:0 auto;padding-block:22px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font:700 32px/1.08 var(--font-display);letter-spacing:-.02em;margin:6px 0 12px;text-wrap:balance}
+h2{font:700 18px/1.25 var(--font-display);margin:0 0 10px;text-wrap:balance}
+p{margin:0 0 12px}
+.eyebrow{font:500 12px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);max-width:64ch;margin-bottom:24px}
+.block{margin:0 0 28px}
+.sp{flex:1}
+.up{color:var(--good)}
+.down{color:var(--bad)}
+
+.topnav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.mode{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;cursor:pointer;color:inherit;font:inherit}
+.mode b{display:block;font:600 15px var(--font-display);margin-bottom:3px}
+.mode span{color:var(--muted);font-size:13.5px}
+.mode[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+
+.dtable{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.drow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:10px 14px;border-top:1px solid var(--line);cursor:pointer}
+.drow:first-child{border-top:0}
+.drow input{accent-color:var(--accent)}
+.drow .name{flex:1 1 220px;min-width:0}
+.drow .meta{font:12.5px var(--font-mono);color:var(--muted)}
+.drow.off{opacity:.55;cursor:default}
+
+.btn{font:600 14px var(--font-body);padding:10px 16px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.mode:focus-visible,.chip:focus-visible,.drop:focus-visible,select:focus-visible,.cell:focus-visible,.flag:focus-visible,.mv button:focus-visible,.opt:has(input:focus-visible),.drow:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+.tips{margin:0;padding-left:18px;color:var(--muted)}
+.tips li{margin-bottom:5px}
+.note{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:12px 14px}
+
+.status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font:12.5px var(--font-mono);color:var(--muted)}
+.status .tag{padding:2px 8px;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.progress{height:3px;background:var(--line);margin:10px 0 14px;border-radius:2px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px}
+.qhead{display:flex;justify-content:space-between;gap:8px 10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font:12px var(--font-mono);color:var(--muted)}
+.flag{font:500 12px var(--font-mono);padding:4px 9px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer}
+.flag[aria-pressed="true"]{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.stem{font:600 17px/1.45 var(--font-display);margin:0 0 6px;text-wrap:pretty}
+.instr{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+
+.opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:6px;margin-bottom:8px;cursor:pointer;position:relative;background:var(--surface)}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt .key{flex:none;width:24px;height:24px;display:grid;place-items:center;border:1px solid var(--line);border-radius:4px;font:500 12px var(--font-mono);color:var(--muted)}
+.opt:hover{border-color:var(--accent)}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt.sel .key{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.opt.right{border-color:var(--good);background:var(--good-bg)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.locked .opt,.locked .chip,.locked .drop,.locked .yn-r label{cursor:default}
+
+.yn{border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.yn-h,.yn-r{display:grid;grid-template-columns:minmax(0,1fr) 52px 52px;align-items:center;gap:6px;padding:9px 12px}
+.yn-h{background:var(--bg);font:500 12px var(--font-mono);color:var(--muted);text-align:center}
+.yn-h span:first-child{text-align:left}
+.yn-r{border-top:1px solid var(--line)}
+.yn-r label{display:grid;place-items:center;min-height:34px;cursor:pointer}
+.yn-r input{accent-color:var(--accent);width:17px;height:17px}
+.yn-r.right{background:var(--good-bg)}
+.yn-r.wrong{background:var(--bad-bg)}
+
+.dd{line-height:2.5;margin:0}
+select{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);max-width:100%}
+select.right{border-color:var(--good);background:var(--good-bg)}
+select.wrong{border-color:var(--bad);background:var(--bad-bg)}
+
+.hint{color:var(--muted);font-size:13.5px;margin:0 0 10px}
+.pool{display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:6px;margin-bottom:12px;min-height:48px;background:var(--bg)}
+.pool em,.drop em{color:var(--muted);font-size:13px;padding:0 6px}
+.chip{display:inline-block;font:500 13.5px/1.35 var(--font-body);text-align:left;padding:7px 10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;cursor:grab;user-select:none}
+.chip.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 1px var(--accent)}
+.slot{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.slot:first-child{border-top:0}
+.slot-l{font-size:14px}
+.drop{min-height:44px;display:flex;align-items:center;padding:4px;border:1px dashed var(--line);border-radius:6px;cursor:pointer}
+.slot.right .drop{border-color:var(--good);background:var(--good-bg)}
+.slot.wrong .drop{border-color:var(--bad);background:var(--bad-bg)}
+@media (max-width:520px){.slot{grid-template-columns:1fr;gap:6px}}
+
+.ord{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ord li{display:flex;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.pos{flex:none;width:24px;height:24px;display:grid;place-items:center;font:500 12px var(--font-mono);color:var(--muted);border:1px solid var(--line);border-radius:4px}
+.otext{flex:1;min-width:0}
+.mv{display:flex;gap:4px}
+.mv button{font:500 12px var(--font-mono);padding:4px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg);cursor:pointer}
+.mv button:disabled{opacity:.35;cursor:default}
+.ord li.right{border-color:var(--good);background:var(--good-bg)}
+.ord li.wrong{border-color:var(--bad);background:var(--bad-bg)}
+
+.fb{margin-top:16px;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.fb-h{font:600 12px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;padding:6px 12px}
+.fb.ok .fb-h{background:var(--good-bg);color:var(--good)}
+.fb.no .fb-h{background:var(--bad-bg);color:var(--bad)}
+.diff{font:13px/1.5 var(--font-mono);padding:4px 12px 4px 30px;position:relative;white-space:pre-wrap;overflow-wrap:anywhere}
+.diff::before{position:absolute;left:12px}
+.diff.add{background:var(--good-bg);color:var(--good)}
+.diff.add::before{content:"+"}
+.diff.del{background:var(--bad-bg);color:var(--bad)}
+.diff.del::before{content:"-"}
+.why{margin:0;padding:10px 12px;font-size:14px}
+
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 24px}
+.confirm{border:1px solid var(--warn);background:var(--warn-bg);padding:12px 14px;border-radius:6px;margin:0 0 20px}
+.confirm p{margin:0 0 10px}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;margin-bottom:8px}
+.cell{height:36px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--muted);font:500 12px var(--font-mono);cursor:pointer;position:relative}
+.cell.done{background:var(--accent-soft);color:var(--fg);border-color:var(--accent)}
+.cell.good{background:var(--good-bg);border-color:var(--good);color:var(--good)}
+.cell.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.cell.cur{outline:2px solid var(--fg);outline-offset:1px}
+.cell.fl::after{content:"";position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--warn)}
+.legend{font:12px var(--font-mono);color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+
+.score{display:flex;flex-wrap:wrap;gap:6px 24px;align-items:baseline;margin:6px 0 22px}
+.score .big{font:700 46px/1 var(--font-display);letter-spacing:-.02em}
+.score .sm{font:13px var(--font-mono);color:var(--muted)}
+.rrow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 7ch;gap:6px 14px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.rrow:first-child{border-top:0}
+.rrow small{display:block;color:var(--muted);font:12px var(--font-mono)}
+.bar{height:8px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--accent)}
+.bar.low i{background:var(--bad)}
+.pct{font:500 13px var(--font-mono);text-align:right}
+.pct.low{color:var(--bad)}
+@media (max-width:520px){.rrow{grid-template-columns:minmax(0,1fr) 7ch}.rrow .bar{grid-column:1/-1;order:3}}
+.miss{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:14px;margin-bottom:12px}
+.miss .stem{font-size:15.5px}
+
+.chart{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.chart .gl{stroke:var(--line);stroke-width:1;fill:none}
+.chart .tgt{stroke:var(--good);stroke-width:1;stroke-dasharray:4 4;fill:none}
+.chart .ln{stroke:var(--accent);stroke-width:2;fill:none}
+.chart .pt{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.chart .tx{fill:var(--muted);font:11px var(--font-mono)}
+.chart .tg{fill:var(--good);font:11px var(--font-mono)}
+.arow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:10px 14px;border-top:1px solid var(--line)}
+.arow:first-child{border-top:0}
+.arow .when{font:12.5px var(--font-mono);color:var(--muted);flex:1 1 150px}
+.arow .sc{font:500 14px var(--font-mono)}
+.arow .dl{font:12.5px var(--font-mono)}
+.arow .qs{flex:1 1 240px;min-width:0;font-size:14px}
+.arow .qm{font:12px var(--font-mono);color:var(--muted)}
+.rev{margin:0;padding:9px 12px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+.links{display:flex;flex-wrap:wrap;gap:2px 16px;font-size:13.5px}
+.links a{color:var(--accent);font-weight:600;text-underline-offset:2px}
+.links a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.links .k{font:11px var(--font-mono);color:var(--muted);margin-left:5px;text-transform:uppercase;letter-spacing:.05em}
+.trow{padding:12px 14px;border-top:1px solid var(--line)}
+.trow:first-child{border-top:0}
+.thead{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) 7ch;gap:6px 14px;align-items:center;margin-bottom:8px}
+.thead small{display:block;color:var(--muted);font:12px var(--font-mono)}
+@media (max-width:520px){.thead{grid-template-columns:minmax(0,1fr) 7ch}.thead .bar{grid-column:1/-1;order:3}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+.plan{display:flex;align-items:center;gap:8px}
+.plan span{font:500 12px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.plan select{font:600 14px var(--font-body);padding:9px 10px}
+.topnav{align-items:center}
+.code{font:12.5px/1.6 var(--font-mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;overflow-x:auto;margin:0 0 14px;white-space:pre;tab-size:2}
+.code select{font:12.5px var(--font-mono);padding:2px 6px;line-height:1.4}
+.reslist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.reslist li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.reslist a{color:var(--accent);font-weight:600;text-underline-offset:2px}
+.reslist .k{font:11px var(--font-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.notice{border:1px solid var(--warn);background:var(--warn-bg);border-radius:8px;padding:10px 14px;margin:0 0 20px;font-size:14px}
+.foot{color:var(--muted);font-size:13px;margin-top:8px}
+.jsonbox{width:100%;min-height:120px;margin-top:10px;font:12px/1.5 var(--font-mono);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px}
+.btn[for]{display:inline-block}
+
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const EXAMS={};
+EXAMS.gh900=Object.assign((function(){
+
+const DOMAINS=[
+ {n:'Understand Git and GitHub basics',w:'25-30%'},
+ {n:'Work with GitHub repositories',w:'10-15%'},
+ {n:'Collaborate using GitHub',w:'10-15%'},
+ {n:'Apply modern development practices',w:'10-15%'},
+ {n:'Manage projects with GitHub',w:'5-10%'},
+ {n:'Privacy, security, and administration',w:'10-15%'},
+ {n:'Explore the GitHub community',w:'5-10%'}
+];
+const EXAM_MIX=[15,7,7,7,4,6,4];
+const Q=[];let _n=0;
+const add=o=>{o.id=++_n;Q.push(o)};
+const YNQ='For each of the following statements, select Yes if the statement is true. Otherwise, select No.';
+const mc=(d,q,opts,a,why)=>add({d,t:'mc',q,opts,a,why});
+const multi=(d,q,opts,a,why)=>add({d,t:'multi',q,opts,a,why,k:a.length});
+const yn=(d,ctx,rows,why)=>add({d,t:'yn',q:ctx+' '+YNQ,rows,why});
+const dd=(d,tpl,sels,why)=>add({d,t:'dd',q:'Complete the statement by selecting the correct option in each list.',tpl,sels,why});
+const match=(d,q,items,slots,why)=>add({d,t:'match',q,items,slots,why});
+const order=(d,q,steps,why)=>add({d,t:'order',q,steps,why});
+
+/* ===== Original bank (ids 1-47, keep order so saved history stays valid) ===== */
+
+/* Domain 1: Understand Git and GitHub basics */
+mc(1,'What is the main difference between Git and GitHub?',
+ ['Git is a distributed version control system, and GitHub is a platform that hosts Git repositories and adds collaboration features','Git is a cloud platform owned by Microsoft, and GitHub is the command-line tool used to work with it','Git and GitHub are two names for the same product','Git manages project boards and issues, and GitHub tracks file history'],0,
+ 'Git is the version control tool that runs on your machine. GitHub is a hosting platform built around Git that adds pull requests, issues, Actions and more.');
+yn(1,'Statements about Git.',
+ [['Git requires a network connection to create a commit.',false],['A cloned repository contains the full history of the project.',true],['Git repositories can only be hosted on GitHub.',false],['A commit records a snapshot of the tracked files at a point in time.',true]],
+ 'Commits are created locally, so no connection is needed. A clone copies the full history. Other services can host Git repositories, and each commit is a snapshot of the project.');
+match(1,'Match each term to its definition. Some items are not used.',
+ ["A project's files together with the full history of changes to them",'A saved snapshot of changes with a message and a unique ID','An independent line of development','A local copy of a remote repository, including its history','A request to merge changes after review'],
+ [['Repository',0],['Commit',1],['Branch',2],['Clone',3]],
+ 'The unused item describes a pull request, which proposes merging one branch into another.');
+order(1,'Arrange the steps of the GitHub flow in the correct order.',
+ ['Create a branch','Make and commit changes on the branch','Open a pull request','Review the changes and address feedback','Merge the pull request','Delete the branch'],
+ 'GitHub flow is a lightweight, branch-based workflow: branch, change, pull request, review, merge, then clean up.');
+mc(1,'Which Markdown syntax creates an unchecked task list item in an issue or pull request description?',
+ ['- [ ] Write the tests','[ ] - Write the tests','* ( ) Write the tests','# [ ] Write the tests'],0,
+ "A task list item is a list marker followed by square brackets: '- [ ]' for open and '- [x]' for done.");
+match(1,'Match each scenario to the GitHub product that fits it best. Some items are not used.',
+ ['GitHub Desktop','GitHub Mobile','GitHub CLI','GitHub Codespaces'],
+ [['Review a pull request and triage notifications from a phone',1],['Commit, branch and push using a graphical app on Windows or macOS',0],['Create a pull request from the terminal with gh pr create',2]],
+ 'Codespaces is a cloud development environment, which none of these scenarios needed.');
+mc(1,'Which Git command uploads your local commits to a remote repository?',
+ ['git push','git pull','git fetch','git clone'],0,
+ "'git push' sends local commits to the remote. 'git pull' and 'git fetch' bring changes down, and 'git clone' copies a repository.");
+dd(1,'Running {0} downloads new commits from the remote without changing your working files. Running {1} downloads them and also merges them into your current branch.',
+ [[['git fetch','git pull','git push','git clone'],0],[['git fetch','git pull','git push','git clone'],1]],
+ "'git fetch' only updates your view of the remote. 'git pull' is a fetch followed by a merge.");
+mc(1,'Two developers change the same lines of a file on different branches. What happens when the branches are merged?',
+ ['Git reports a merge conflict that must be resolved manually','Git keeps the changes from the branch with the most commits','Git always keeps the changes from the branch being merged into','GitHub deletes the older branch'],0,
+ 'When changes overlap and Git cannot reconcile them, it marks a merge conflict and asks a person to choose the result.');
+mc(1,'You want to notify a specific person in a pull request comment. What do you type?',
+ ['@ followed by their username','# followed by their username','! followed by their username','$ followed by their username'],0,
+ "An @mention notifies the person. '#' followed by a number links to an issue or pull request instead.");
+mc(1,'A company must run GitHub on its own infrastructure, behind its own firewall. Which option meets this requirement?',
+ ['GitHub Enterprise Server','GitHub Enterprise Cloud','GitHub Team','GitHub Free'],0,
+ 'Enterprise Server is self-hosted. Enterprise Cloud, Team and Free are hosted by GitHub.');
+yn(1,'Statements about the GitHub flow.',
+ [['Work is done on a branch rather than directly on the default branch.',true],['A pull request is used to propose and discuss changes before they are merged.',true],['The GitHub flow requires a long-lived develop branch alongside main.',false],['After a pull request is merged, its branch can be deleted.',true]],
+ 'GitHub flow keeps one default branch plus short-lived topic branches. A permanent develop branch belongs to heavier workflows such as Git flow.');
+mc(1,'Which command creates a new branch named feature-login and switches to it?',
+ ['git checkout -b feature-login','git branch -d feature-login','git merge feature-login','git stash feature-login'],0,
+ "'git checkout -b' creates and switches in one step. 'git branch -d' deletes a branch, and newer Git also offers 'git switch -c' for the same job.");
+
+/* Domain 2: Work with GitHub repositories */
+match(2,'Match each file to its purpose. All items are used once.',
+ ['README','LICENSE','CONTRIBUTING','CODEOWNERS','SECURITY'],
+ [['Introduces the project and appears on the repository home page',0],['States the terms under which others may use, modify and share the code',1],['Explains how people should propose changes to the project',2],['Assigns people or teams to review changes to specific files',3],['Tells people how to report a vulnerability responsibly',4]],
+ 'These are the key repository files named in the study guide.');
+mc(2,'A repository has branch protection that requires code owner review. A pull request changes a file covered by a CODEOWNERS entry. What is required before it can be merged?',
+ ['An approving review from the listed code owner or one of the listed code owner teams','An approval from the person who created the repository','An approval from any user who has starred the repository','Nothing, because CODEOWNERS only displays a label'],0,
+ 'CODEOWNERS automatically requests review from the owners, and with the protection rule on, their approval is required.');
+mc(2,'A team wants every new project to start with the same folders, workflow files and settings, without carrying over the commit history. Which feature should they use?',
+ ['A template repository','A fork','A clone','A gist'],0,
+ 'A template repository generates a new repository with the same files and folders and a fresh history. A fork stays linked to the upstream repository.');
+mc(2,'You want to see who last changed each line of a file and in which commit. Which view should you use?',
+ ['Blame','Compare','Raw','Network'],0,
+ 'The blame view annotates every line with the commit and author that last changed it.');
+mc(2,'Which Insights page lists the packages and libraries that a repository depends on?',
+ ['Dependency graph','Traffic','Pulse','Forks'],0,
+ 'The dependency graph shows dependencies. Traffic shows views and clones, Pulse summarizes recent activity, and Forks lists forks.');
+multi(2,'Which TWO actions add a file to a repository from the GitHub web interface?',
+ ['Choose Add file, then Upload files, and drag the file in','Choose Add file, then Create new file, and commit it','Email the file to the repository address','Paste the file into the Settings tab'],[0,1],
+ 'The Add file menu offers both uploading existing files and creating a new file in the browser.');
+mc(2,'Which of the following is NOT a community health file that GitHub recognizes?',
+ ['package-lock.json','CONTRIBUTING.md','SECURITY.md','CODE_OF_CONDUCT.md'],0,
+ 'package-lock.json records exact dependency versions for npm. The others are community health files.');
+
+/* Domain 3: Collaborate using GitHub */
+mc(3,'A pull request fixes issue 42. Which text in the pull request description closes the issue automatically when the pull request is merged into the default branch?',
+ ['Fixes #42','See also #42','Related to #42','Issue 42 is similar'],0,
+ 'Closing keywords such as fixes, closes and resolves, followed by the issue reference, close the issue on merge. Other wording only creates a link.');
+mc(3,'A maintainer wants an open forum where the community can ask questions and share ideas that are not tracked as tasks. Which feature fits best?',
+ ['GitHub Discussions','GitHub Issues','GitHub Projects','GitHub Wikis'],0,
+ 'Discussions is for conversation and Q&A. Issues track actionable work.');
+match(3,'Match each feature to its description. Some items are not used.',
+ ['Gist','Wiki','GitHub Pages','Discussions'],
+ [['Share a small snippet or note that is version controlled and can be public or secret',0],['Host long-form documentation pages for a repository that people can edit',1],['Publish a static website directly from a repository',2]],
+ 'Discussions is a conversation space, so it was not needed here.');
+mc(3,'You are @mentioned in an issue in a repository that you do not watch. What happens?',
+ ['You receive a notification because being mentioned counts as participating','You receive nothing, because only watchers are notified','You receive a notification only if you star the repository','You receive a notification only by email, never on GitHub'],0,
+ 'You are notified about conversations you take part in or are mentioned in, even without watching the repository.');
+yn(3,'Statements about pull requests.',
+ [['A draft pull request cannot be merged until it is marked ready for review.',true],['A pull request template can pre-fill the description of new pull requests.',true],['A pull request can only be opened from a branch in the same repository.',false],['Only repository admins can be assigned to a pull request.',false]],
+ 'Drafts block merging, templates pre-fill descriptions, forks can open pull requests, and assignees are not limited to admins.');
+mc(3,'A developer wants a specific teammate to evaluate the changes in a pull request. Which feature should they use?',
+ ['Request a review from that person','Add a label to the pull request','Add the pull request to a milestone','Subscribe the teammate to the repository'],0,
+ 'A review request lets the teammate approve, comment or request changes. Labels and milestones only organize work.');
+
+/* Domain 4: Apply modern development practices */
+mc(4,'Where are GitHub Actions workflow files stored in a repository?',
+ ['.github/workflows','/actions at the root of the repository','.git/hooks','/docs/workflows'],0,
+ 'Workflows are YAML files in the .github/workflows directory.');
+dd(4,'A {0} is an automated process defined in a YAML file, and it starts when an {1} occurs, such as a push or a pull request.',
+ [[['workflow','runner','secret','fork'],0],[['event','artifact','environment','label'],0]],
+ 'A workflow is triggered by events. A runner is the machine that executes the jobs.');
+mc(4,'An organization owner needs to control which members can use Copilot and set organization-wide policies. Which plans provide this centralized management?',
+ ['Copilot Business and Copilot Enterprise','Copilot for Individuals only',"Any plan, using each member's personal settings",'Only Copilot Enterprise'],0,
+ 'Business and Enterprise are the organization-level plans with central seat and policy management. Individuals is for a single person.');
+mc(4,'Which statement best describes Copilot agent mode in an editor?',
+ ['Copilot can plan a multi-step task, edit several files, run commands and iterate on errors while the developer reviews the results','Copilot only completes the current line of code and cannot edit other files','Copilot merges its own changes into the default branch without review','Copilot only answers general questions and cannot change code'],0,
+ 'Agent mode takes on larger tasks across files, and the developer stays in control by reviewing the changes.');
+yn(4,'Statements about GitHub Copilot.',
+ [['Developers should review Copilot suggestions before accepting them.',true],['Copilot Chat can explain code that you select.',true],['Copilot supports choosing between different AI models for chat on supported plans.',true],['Copilot only works in Visual Studio Code.',false]],
+ 'Copilot output always needs human review, chat can explain code, multi-model support exists, and Copilot works in several editors.');
+mc(4,'A reviewer wants to read and make a quick edit to a file in the browser by pressing the . key on a repository page. The editor has no terminal and cannot run code. Which tool is this?',
+ ['github.dev','GitHub Codespaces','GitHub Desktop','GitHub Mobile'],0,
+ 'github.dev is a lightweight web editor. Codespaces gives you a full cloud development environment with a terminal and the ability to run code.');
+mc(4,'Which file customizes the tools, extensions and settings that a Codespace starts with?',
+ ['devcontainer.json','codespace.yml','.github/workflows/dev.yml','settings.xml'],0,
+ 'The dev container configuration lives in devcontainer.json, usually inside a .devcontainer folder.');
+
+/* Domain 5: Manage projects with GitHub */
+mc(5,'A team wants to see work items as cards grouped into columns by status. Which GitHub Projects layout should they choose?',
+ ['Board','Table','Roadmap','Timeline'],0,
+ 'The Board layout shows cards in columns. Table is a spreadsheet view, and Roadmap shows items over time.');
+mc(5,'A maintainer keeps typing the same reply asking for steps to reproduce a bug. Which feature reduces the effort?',
+ ['Saved replies','Milestones','Labels','Gists'],0,
+ 'Saved replies store text you reuse often so you can insert it into comments quickly.');
+match(5,'Match each feature to its purpose. All items are used once.',
+ ['Assignee','Label','Milestone','Project insights'],
+ [['Shows who is responsible for an item',0],['Categorizes items, for example as a bug or an enhancement',1],['Tracks progress of a group of items toward a goal or date',2],['Charts progress and trends across a project',3]],
+ 'Assignees give ownership, labels categorize, milestones track a goal, and insights chart project progress.');
+yn(5,'Statements about GitHub Projects.',
+ [['A project can include issues and pull requests from more than one repository.',true],['A project can be viewed as a table, a board or a roadmap.',true],['A project can only be created by an individual user, never by an organization.',false],["Built-in project workflows can update an item's status automatically, for example when it is closed.",true]],
+ 'Projects span repositories, offer several layouts and automation, and can be owned by a user or an organization.');
+
+/* Domain 6: Privacy, security and administration */
+mc(6,'Which sign-in method is resistant to phishing and can use a device PIN or biometrics instead of a password?',
+ ['Passkey','SMS code','Security questions','A longer password'],0,
+ 'Passkeys are tied to your device and the site, so they cannot be handed to a fake page the way a password or code can.');
+match(6,'Match each repository role to the description that fits best. All items are used once.',
+ ['Read','Triage','Write','Maintain','Admin'],
+ [['View and discuss the project without changing code',0],['Manage issues and pull requests without write access to the code',1],['Push changes to the repository',2],['Manage the repository without access to sensitive or destructive actions',3],['Full access, including sensitive or destructive actions such as deleting the repository',4]],
+ 'The roles run from least to most access: Read, Triage, Write, Maintain, Admin.');
+mc(6,'Which statement best describes Enterprise Managed Users (EMU)?',
+ ['User accounts are created and managed by the enterprise through its identity provider, and are limited to that enterprise','Existing personal accounts are linked to the enterprise and keep their own settings and public contributions','Only organization owners can sign in, and members have read-only access','Everyone in the company signs in with one shared GitHub password'],0,
+ 'With EMU the enterprise owns the accounts and controls them through its identity provider. Linking personal accounts is a different model.');
+multi(6,'Which TWO settings can branch protection rules enforce on a branch?',
+ ['Require pull request reviews before merging','Require status checks to pass before merging','Allow anyone to force push','Turn off two-factor authentication for contributors'],[0,1],
+ 'Branch protection can require reviews and passing checks. It does not weaken security by allowing force pushes for everyone.');
+mc(6,'In an enterprise, a repository should be readable by all enterprise members but not by the public. Which visibility should it have?',
+ ['Internal','Public','Private','Archived'],0,
+ 'Internal repositories are visible to members of the enterprise. Private is limited to people with explicit access, and Public is visible to everyone.');
+mc(6,'An organization owner on Copilot Business wants to choose which members receive a Copilot seat. Where can they manage this?',
+ ['In the organization settings, in the Copilot access section',"In each member's personal Copilot settings",'In the repository Actions settings','On the GitHub Marketplace listing page'],0,
+ 'Seat assignment and policies are managed centrally by the organization owner in organization settings.');
+
+/* Domain 7: Explore the GitHub community */
+mc(7,'You want to propose a change to a project where you do not have write access. What should you do first?',
+ ['Fork the repository','Clone the repository and push directly to it','Create a branch in the original repository','Open a discussion and wait for write access'],0,
+ 'A fork gives you your own copy where you can push changes, then you open a pull request back to the original.');
+mc(7,'Which statement best describes InnerSource?',
+ ["Applying open source practices such as transparent collaboration and contribution within an organization's own repositories","Publishing all of a company's private code to the public","Moving a company's repositories to a different Git host",'A license that prevents other people from forking a project'],0,
+ 'InnerSource borrows open source habits and uses them inside a company.');
+yn(7,'Statements about the GitHub community.',
+ [['GitHub Sponsors lets people financially support open source maintainers.',true],['GitHub Marketplace lists apps and Actions that extend GitHub.',true],['Starring a repository creates a copy of it in your account.',false],['Following a user shows their public activity in your dashboard feed.',true]],
+ 'Starring bookmarks a repository. A fork is what creates a copy.');
+mc(7,'Which feature helps people find your repository when they browse or search for a subject area?',
+ ['Topics','Milestones','Saved replies','Wikis'],0,
+ 'Repository topics tag a project by subject so it shows up in topic pages and search.');
+
+/* ===== Added bank (ids 48 onwards) ===== */
+
+/* Domain 1 additions */
+mc(1,'Which command shows which files are modified, staged or untracked in your working directory?',
+ ['git status','git log','git remote','git init'],0,
+ "'git status' reports the state of the working directory and the staging area. 'git log' shows commit history.");
+mc(1,'Which command turns the current folder into a new Git repository?',
+ ['git init','git clone','git add','git remote add'],0,
+ "'git init' creates a new, empty repository in the current folder. 'git clone' copies one that already exists.");
+mc(1,'Which command stages a changed file so that it is included in the next commit?',
+ ['git add','git commit','git push','git stash'],0,
+ "'git add' moves changes into the staging area. 'git commit' then records them.");
+order(1,'Arrange the steps for saving a change and sharing it with GitHub, using Git on your own machine.',
+ ['Edit a file in the working directory','Stage the change with git add','Record the snapshot with git commit','Upload the commit with git push'],
+ 'Changes move from the working directory to the staging area, then into a local commit, and finally to the remote.');
+match(1,'Match each Git command to what it does. All items are used once.',
+ ['git clone','git add','git commit','git push','git pull'],
+ [['Copy a remote repository and its history to your machine',0],['Stage changes for the next commit',1],['Record the staged changes as a snapshot',2],['Upload local commits to the remote repository',3],['Download remote changes and merge them into your current branch',4]],
+ 'Clone copies, add stages, commit records, push uploads and pull downloads and merges.');
+yn(1,'Statements about branches.',
+ [['Branches let you work on changes without affecting the default branch.',true],['A repository can have more than one branch.',true],['Deleting a branch after a merge always deletes the merged commits from the project history.',false],['Every commit must be made on the main branch.',false]],
+ 'Merged commits stay in the history of the branch they were merged into, even after the topic branch is deleted.');
+mc(1,'Which is a benefit of using version control?',
+ ['It records a history of changes so you can review or revert them','It guarantees that two people can never edit the same file','It removes the need for code review','It automatically deploys every commit to production'],0,
+ 'Version control keeps a history and supports collaboration. It does not prevent conflicts, replace review or deploy by itself.');
+mc(1,'What is a GitHub organization used for?',
+ ['A shared account where teams collaborate on projects, with central administration and permissions','A copy of Git that you install on your own server','A tool that runs automated tests when code changes','A naming convention for branches'],0,
+ 'Organizations let groups own repositories and manage members, teams and roles in one place. The second option describes Enterprise Server, and the third describes Actions.');
+mc(1,'Which Markdown syntax creates a level 2 heading?',
+ ['## Heading','2# Heading','-- Heading --','!! Heading'],0,
+ 'Each leading hash symbol adds a heading level, so two hashes and a space make a level 2 heading.');
+mc(1,'Which Markdown syntax formats text as a fenced code block?',
+ ['Three backticks before and after the code','Three asterisks before and after the code','Three hash signs before and after the code','Three pipe characters before and after the code'],0,
+ 'A fenced code block opens and closes with three backticks.');
+mc(1,'Which Markdown syntax creates a link with the text GitHub?',
+ ['[GitHub](https://github.com)','(GitHub)[https://github.com]','<GitHub>(https://github.com)','{GitHub}[https://github.com]'],0,
+ 'The link text goes in square brackets, immediately followed by the address in parentheses.');
+yn(1,'Statements about Markdown on GitHub.',
+ [['Markdown can be used in issues, pull requests and README files.',true],['Markdown can only be used in README files.',false],['A line that starts with a hash symbol and a space becomes a heading.',true],['Markdown requires a browser plugin before it renders in GitHub comments.',false]],
+ 'GitHub renders Markdown in many places, including comments, with no plugin.');
+mc(1,'What happens when you merge a pull request?',
+ ['The changes from the head branch are combined into the base branch','The base branch is deleted','The pull request is converted into an issue','The repository is forked'],0,
+ 'Merging brings the pull request changes into the branch it targets.');
+mc(1,'In a cloned repository, what does the remote name origin usually refer to?',
+ ['The repository you cloned from','The first commit in the history','Your local default branch','The newest tag'],0,
+ "'origin' is the default name Git gives to the remote you cloned from.");
+mc(1,'What does HEAD refer to in Git?',
+ ['The commit or branch you currently have checked out','The first commit in the repository','The URL of the remote repository','The newest tag'],0,
+ 'HEAD is a pointer to your current position in the history.');
+mc(1,'What does git stash do?',
+ ['Temporarily sets aside uncommitted changes so you can switch tasks','Uploads your commits to GitHub','Deletes a branch','Creates a new repository'],0,
+ 'Stash shelves your uncommitted work so you can return to a clean working directory and restore it later.');
+multi(1,'Which TWO features does GitHub add on top of Git?',
+ ['Pull requests','Issues','Local commits','Branching'],[0,1],
+ 'Commits and branching are core Git features. Pull requests and issues are collaboration features of the GitHub platform.');
+mc(1,'Which command shows the history of commits on the current branch?',
+ ['git log','git status','git diff','git remote'],0,
+ "'git log' lists commits. 'git diff' shows changes that are not yet committed.");
+mc(1,'Which command lists the branches in your local repository?',
+ ['git branch','git commit','git remote','git tag'],0,
+ "'git branch' lists local branches and marks the current one.");
+
+/* Domain 2 additions */
+mc(2,'Which file tells Git to leave certain files, such as build output or local secrets, untracked?',
+ ['.gitignore','CODEOWNERS','README.md','LICENSE'],0,
+ 'Patterns in .gitignore stop matching files from being tracked.');
+mc(2,"Which file is shown on a repository's home page by default?",
+ ['README','LICENSE','CONTRIBUTING','SECURITY'],0,
+ 'GitHub displays the README below the file list on the repository home page.');
+yn(2,'Statements about repositories.',
+ [['Every repository must contain a LICENSE file.',false],['A new repository can be created from a template.',true],['A README file can be written in Markdown.',true],['Only the repository owner can ever add files to a repository.',false]],
+ 'A license is recommended for public projects but not required. People with write access, not only the owner, can add files.');
+mc(2,'What does starring a repository do?',
+ ['Bookmarks it and signals appreciation, and it appears in your list of stars','Creates a copy of it in your account','Subscribes you to every notification for the repository','Gives you write access'],0,
+ 'A star is a bookmark and a sign of appreciation. A fork creates a copy, and watching controls notifications.');
+mc(2,'You want a notification for all activity in a repository. What should you do?',
+ ['Watch the repository and choose All Activity','Star the repository','Fork the repository','Follow the repository owner'],0,
+ 'Watch settings control repository notifications. Starring only bookmarks.');
+mc(2,'A project is no longer maintained. Which feature makes the repository read-only while keeping it visible?',
+ ['Archive the repository','Delete the repository','Transfer the repository','Rename the repository'],0,
+ 'Archiving makes a repository read-only so people can still read and fork it.');
+match(2,'Match each Insights view to what it shows. All items are used once.',
+ ['Pulse','Contributors','Traffic','Dependency graph'],
+ [['A summary of recent activity such as merged pull requests and new issues',0],['Who has committed to the repository and how much',1],['Views and clones of the repository',2],['Libraries and packages the repository depends on',3]],
+ 'Insights offers several views of activity and health, including these four.');
+mc(2,'What is the default branch name for new repositories created on GitHub?',
+ ['main','master','trunk','default'],0,
+ 'New repositories use main as the default branch name unless you change it.');
+multi(2,'Which TWO files give people guidance on how to take part in a project?',
+ ['CONTRIBUTING.md','CODE_OF_CONDUCT.md','package.json','Dockerfile'],[0,1],
+ 'CONTRIBUTING explains how to propose changes, and the code of conduct sets expectations for behavior.');
+dd(2,'Use the {0} view to see who changed each line of a file, and the {1} view to see every commit that touched the file.',
+ [[['blame','history','compare','raw'],0],[['blame','history','compare','raw'],1]],
+ 'Blame annotates lines. History lists the commits for the file.');
+order(2,'Arrange the steps to create a new repository from a template.',
+ ['Open the template repository','Choose Use this template','Enter a name and choose visibility for the new repository','Create the repository'],
+ 'A template repository gives you a Use this template button that leads to a new repository form.');
+
+/* Domain 3 additions */
+mc(3,'Which file name pre-fills the description of new pull requests?',
+ ['pull_request_template.md','pr_default.yml','template.txt','review_rules.md'],0,
+ 'A pull_request_template.md file defines the default pull request description.');
+mc(3,'Where are issue templates stored in a repository?',
+ ['.github/ISSUE_TEMPLATE','.github/workflows','.issues','docs/issues'],0,
+ 'Issue templates are files in the .github/ISSUE_TEMPLATE directory.');
+mc(3,'Which review option can block a pull request from merging when approvals are required?',
+ ['Request changes','Comment','Approve','Dismiss'],0,
+ 'A Request changes review blocks merging until it is dismissed or the reviewer later approves.');
+yn(3,'Statements about issues.',
+ [['An issue can be assigned to more than one person.',true],['Only repository owners can create issues.',false],['Labels can be used to filter issues.',true],['Closing a pull request always merges its changes.',false]],
+ 'Several people can be assigned, anyone with access can open issues, and closing a pull request without merging discards nothing but does not merge either.');
+mc(3,'Which merge option combines all the commits of a pull request into a single commit on the base branch?',
+ ['Squash and merge','Create a merge commit','Rebase and merge','Cherry-pick'],0,
+ 'Squash and merge turns the whole pull request into one commit.');
+match(3,'Match each merge option to what it does. Some items are not used.',
+ ['Create a merge commit','Squash and merge','Rebase and merge','Revert commit'],
+ [['Keeps every commit and adds a merge commit',0],['Combines all commits into one commit',1],['Replays commits onto the base branch without a merge commit',2]],
+ 'Revert undoes a merged change, so it was not needed here.');
+mc(3,'Which type of content can GitHub Pages host?',
+ ['Static websites made of HTML, CSS and JavaScript','Server-side applications that need a database','Container images','Private package registries'],0,
+ 'GitHub Pages serves static files directly from a repository.');
+mc(3,'Which statement about gists is true?',
+ ['A gist is a Git repository, so it has history and can be forked or cloned','A gist can contain only one line of text','Gists are always public','A gist requires an organization'],0,
+ 'Gists are small Git repositories for snippets and notes, and they can be public or secret.');
+mc(3,'A person wants notifications only for conversations they are part of. Which watch setting should they use?',
+ ['Participating and @mentions','All Activity','Ignore','Releases only'],0,
+ 'Participating and @mentions limits notifications to threads you are in or are mentioned in.');
+mc(3,'A pull request shows that it has conflicts that must be resolved. What should the author do?',
+ ['Resolve the conflicts and update the branch','Ask reviewers to approve it anyway','Delete the pull request','Convert it to an issue'],0,
+ 'Conflicts must be resolved, either in the web editor or locally, before the pull request can merge.');
+multi(3,'Which TWO ways can link a pull request to an issue?',
+ ['Use a closing keyword in the pull request description','Use the Development section in the pull request sidebar','Add a label that contains the issue number','Mention the issue in the branch protection settings'],[0,1],
+ 'A closing keyword or the Development sidebar creates the link. Labels and protection rules do not.');
+order(3,'Arrange the steps of a typical code review.',
+ ['The author opens a pull request','A reviewer leaves comments or requests changes','The author pushes updates to the branch','The reviewer approves the pull request','The pull request is merged'],
+ 'Review is a loop of comments and updates that ends with approval and merge.');
+
+/* Domain 4 additions */
+mc(4,'In GitHub Actions, what is a runner?',
+ ['A server that runs the jobs in a workflow','A file that defines a workflow','An event that starts a workflow','A secret stored in the repository'],0,
+ 'A runner is the machine, hosted by GitHub or by you, that executes jobs.');
+match(4,'Match each GitHub Actions term to its meaning. All items are used once.',
+ ['Workflow','Job','Step','Runner','Event'],
+ [['A configurable automated process defined in a YAML file',0],['A set of steps that run on the same runner',1],['An individual task such as running a script or an action',2],['The machine that runs a job',3],['Something that triggers a workflow, such as a push',4]],
+ 'An event triggers a workflow, which contains jobs. Each job has steps and runs on a runner.');
+mc(4,'Which keyword in a workflow step references a reusable action?',
+ ['uses','run','on','name'],0,
+ "'uses' references an action. 'run' executes a shell command.");
+mc(4,'Where should a workflow store an API key that it needs?',
+ ['In encrypted secrets in the repository or organization settings','In the workflow file as plain text','In the README','In an issue comment'],0,
+ 'Secrets are stored encrypted and are exposed to workflows without appearing in the code.');
+yn(4,'Statements about GitHub Actions.',
+ [['Workflows can be triggered by events such as push, pull_request and schedule.',true],['A workflow can only run on GitHub-hosted runners.',false],['Workflow files must be placed in the .github/workflows directory.',true],['A repository can only have one workflow.',false]],
+ 'Self-hosted runners exist, and a repository can contain many workflows.');
+mc(4,'Which Copilot capability lets you ask questions about code in natural language inside your editor?',
+ ['Copilot Chat','GitHub Pages','GitHub Sponsors','GitHub Packages'],0,
+ 'Copilot Chat is the conversational interface for asking about, explaining and changing code.');
+multi(4,'Which TWO tasks can Copilot Chat help with?',
+ ['Explaining code','Writing unit tests','Merging pull requests without any human review','Replacing the need for code review'],[0,1],
+ 'Copilot can explain and generate code and tests, but it does not remove the need for human review.');
+mc(4,'Which statement about GitHub Codespaces is true?',
+ ['It provides a configurable development environment hosted in the cloud','It only works without an internet connection','It is a package registry','It replaces pull requests'],0,
+ 'A codespace is a cloud-hosted development environment you can open in the browser or an editor.');
+mc(4,'What is a dev container?',
+ ['A container-based development environment defined in configuration so everyone gets the same tools','A branch that only developers can see','A type of repository template','A runner that is billed by the minute'],0,
+ 'A dev container is defined by configuration, usually devcontainer.json, so environments are consistent.');
+yn(4,'Statements about github.dev and Codespaces.',
+ [['github.dev opens a full cloud development environment with a terminal.',false],['A Codespace can be configured with a devcontainer.json file.',true],['Pressing the . key on a repository page opens github.dev.',true],['github.dev can run your application tests.',false]],
+ 'github.dev is a lightweight editor with no compute or terminal. Codespaces provides the full environment.');
+mc(4,'Which workflow trigger runs a workflow on a timer?',
+ ['schedule','push','release','workflow_dispatch'],0,
+ "'schedule' uses a cron expression. 'workflow_dispatch' starts a run manually.");
+dd(4,'Copilot {0} can work through multi-step tasks and edit several files, while Copilot {1} lets you ask questions in a conversation.',
+ [[['agent mode','Chat','Pages','Sponsors'],0],[['agent mode','Chat','Pages','Sponsors'],1]],
+ 'Agent mode takes on larger tasks across files. Chat is the question and answer interface.');
+
+/* Domain 5 additions */
+mc(5,'Which feature categorizes issues, for example as bug or documentation?',
+ ['Labels','Milestones','Assignees','Saved replies'],0,
+ 'Labels classify issues and pull requests so they are easy to filter.');
+mc(5,'A team groups issues for the v2.0 release and wants to see a completion percentage. Which feature should they use?',
+ ['Milestones','Labels','Gists','Saved replies'],0,
+ 'A milestone shows progress as items are closed.');
+yn(5,'Statements about project fields and views.',
+ [['A project can have custom fields such as Priority.',true],['A project can only have one view.',false],['Project items can only be issues.',false],['A project can be linked to repositories.',true]],
+ 'Projects support custom fields and several views, and items can also be pull requests or draft issues.');
+mc(5,'Which Projects layout shows items on a timeline by date?',
+ ['Roadmap','Board','Table','List'],0,
+ 'The Roadmap layout plots items over time.');
+mc(5,'Which Projects feature shows charts of progress and trends?',
+ ['Insights','Saved replies','Wikis','Milestones'],0,
+ 'Project insights chart progress, for example work completed over time.');
+mc(5,'How can you track an idea in a project before it becomes an issue in a repository?',
+ ['Add a draft issue','Create a gist','Create a wiki page','Archive the project'],0,
+ 'Draft issues live in the project and can be converted into repository issues later.');
+
+/* Domain 6 additions */
+mc(6,'Which of the following is NOT a supported second factor for GitHub two-factor authentication?',
+ ['Security questions','An authenticator app','A hardware security key','GitHub Mobile'],0,
+ 'Security questions are not a second factor. Authenticator apps, security keys and GitHub Mobile are.');
+yn(6,'Statements about security and access.',
+ [['Branch protection rules can prevent force pushes to a branch.',true],['Anyone on the internet can read a private repository.',false],['Organization owners can require two-factor authentication for members.',true],['Outside collaborators automatically become organization members.',false]],
+ 'Private repositories are limited to people with access. Outside collaborators have access to specific repositories without being members.');
+mc(6,'In an organization, what are teams used for?',
+ ['Grouping members so repository access and mentions can be managed together','Hosting static websites','Running workflows','Storing secrets'],0,
+ 'Teams let owners grant repository access to many people at once.');
+mc(6,'A contractor needs access to one repository but should not be a member of the organization. What should the owner add them as?',
+ ['An outside collaborator','An organization owner','A billing manager','A team maintainer'],0,
+ 'Outside collaborators can be given access to specific repositories without joining the organization.');
+match(6,'Match each organization role to its description. All items are used once.',
+ ['Owner','Member','Billing manager','Outside collaborator'],
+ [['Full administrative access to the organization',0],['Default role, with access based on permissions granted',1],['Manages billing without access to repository content',2],['Access to specific repositories without being an organization member',3]],
+ 'Roles are scoped from complete administration down to access for a single repository.');
+mc(6,'Which statement about a private repository is true?',
+ ['Only people and teams who are granted access can see it','All GitHub users can view it','It appears in public search results','Anyone can fork it without access'],0,
+ 'Private repositories are visible only to people who have been given access.');
+mc(6,'Which restriction applies to Enterprise Managed Users?',
+ ['They cannot contribute to repositories outside their enterprise','They cannot open pull requests','They must use GitHub Desktop','They cannot be added to teams'],0,
+ 'Managed users are confined to the enterprise, which is one reason enterprises choose EMU.');
+mc(6,'Which feature records events in an organization, such as when a member is added or a setting is changed?',
+ ['The audit log','Pulse','The dependency graph','Blame'],0,
+ 'The audit log tracks activity for administration and review.');
+dd(6,'A {0} role can push to a repository, while a {1} role can manage issues and pull requests without write access to the code.',
+ [[['Read','Triage','Write','Maintain','Admin'],2],[['Read','Triage','Write','Maintain','Admin'],1]],
+ 'Write allows pushing code. Triage manages issues and pull requests without write access.');
+order(6,'Arrange the repository roles from least access to most access.',
+ ['Read','Triage','Write','Maintain','Admin'],
+ 'Each role adds capabilities to the one before it.');
+yn(6,'Statements about repository roles.',
+ [['The Maintain role can delete a repository.',false],['The Triage role can push code to the repository.',false],['The Admin role includes sensitive and destructive actions.',true],['The Read role can open issues and comment on pull requests.',true]],
+ 'Maintain stops short of destructive actions such as deleting the repository, and Triage does not include write access to the code.');
+
+/* Domain 7 additions */
+dd(7,'A {0} creates a copy of a repository under your own account, while a {1} copies the repository to your local machine.',
+ [[['fork','clone','branch','commit'],0],[['fork','clone','branch','commit'],1]],
+ 'A fork lives on GitHub under your account. A clone is a local copy.');
+mc(7,'Which feature lets you financially support the developers of open source projects you rely on?',
+ ['GitHub Sponsors','GitHub Marketplace','Stars','GitHub Projects'],0,
+ 'GitHub Sponsors lets people fund maintainers and projects.');
+multi(7,'Which TWO things help potential contributors understand and trust an open source project?',
+ ['A README that explains the project','A LICENSE that states the usage terms','A .gitignore file','A private branch'],[0,1],
+ 'A README explains the project and a license states what others may do with it.');
+mc(7,'After forking a project, how do you bring in new changes from the original repository?',
+ ['Sync the fork with the upstream repository','Delete the fork and email the maintainer','Archive the fork','Open an issue on your own fork'],0,
+ 'Syncing a fork updates it from the upstream repository.');
+mc(7,'Which statement describes GitHub Marketplace?',
+ ['A place to find tools and apps, including Actions, that extend GitHub','A place to buy web hosting','A list of every public repository','A tool for merging pull requests'],0,
+ 'Marketplace lists apps and Actions you can add to your workflow.');
+yn(7,'Statements about open source.',
+ [['Open source software lets others view, modify and distribute the code, subject to its license.',true],['Contributing to an open source project always requires write access to its repository.',false],['InnerSource uses open source practices inside a company.',true],['Forking a repository gives you write access to the original repository.',false]],
+ 'Contributors usually fork and open pull requests. A fork is your own copy, not access to the original.');
+/* ===== Study resources, matched to questions by topic ===== */
+const LEARN='https://learn.microsoft.com/en-us/training/modules/';
+const DOCS='https://docs.github.com/';
+const TOPICS={
+ git:{n:'Git basics and commands',l:[['Introduction to Git',LEARN+'intro-to-git/','Learn']]},
+ ghintro:{n:'GitHub basics and the GitHub flow',l:[['Introduction to GitHub',LEARN+'introduction-to-github/','Learn']]},
+ products:{n:'GitHub products, plans and organizations',l:[["Introduction to GitHub's products",LEARN+'github-introduction-products/','Learn']]},
+ markdown:{n:'Markdown and mentions',l:[['Communicate effectively on GitHub using Markdown',LEARN+'communicate-using-markdown/','Learn']]},
+ repos:{n:'Repository files and features',l:[['Working with GitHub repositories',DOCS+'repositories','Docs']]},
+ history:{n:'Searching repository history and blame',l:[['Search and organize repository history by using GitHub',LEARN+'search-organize-repository-history-github/','Learn']]},
+ prs:{n:'Pull requests, reviews and merging',l:[['Manage repository changes by using pull requests on GitHub',LEARN+'manage-changes-pull-requests-github/','Learn'],['Pull requests',DOCS+'pull-requests','Docs']]},
+ issues:{n:'Issues and templates',l:[['Issues',DOCS+'issues','Docs']]},
+ notifications:{n:'Notifications and watching',l:[['Notifications',DOCS+'account-and-profile/managing-subscriptions-and-notifications-on-github','Docs']]},
+ sharing:{n:'Discussions, Gists, Wikis and Pages',l:[['Discussions',DOCS+'discussions','Docs'],['Gists',DOCS+'get-started/writing-on-github/editing-and-sharing-content-with-gists','Docs'],['Wikis',DOCS+'communities/documenting-your-project-with-wikis','Docs'],['Pages',DOCS+'pages','Docs']]},
+ actions:{n:'GitHub Actions',l:[['GitHub Actions',DOCS+'actions','Docs']]},
+ copilot:{n:'GitHub Copilot',l:[['Introduction to GitHub Copilot',LEARN+'introduction-to-github-copilot/','Learn'],['Copilot',DOCS+'copilot','Docs']]},
+ codespaces:{n:'Codespaces and github.dev',l:[['Code with GitHub Codespaces',LEARN+'code-with-github-codespaces/','Learn'],['Codespaces',DOCS+'codespaces','Docs']]},
+ projects:{n:'GitHub Projects, labels and milestones',l:[['Manage your work with GitHub Projects',LEARN+'manage-work-github-projects/','Learn']]},
+ secrepo:{n:'Securing repositories and branches',l:[['Maintain a secure repository by using GitHub best practices',LEARN+'maintain-secure-repository-github/','Learn']]},
+ admin:{n:'Organizations, teams and roles',l:[['Introduction to GitHub administration',LEARN+'github-introduction-administration/','Learn']]},
+ auth:{n:'Authentication, 2FA and managed identities',l:[['Authenticate and authorize user identities on GitHub',LEARN+'authenticate-authorize-user-identities-github/','Learn']]},
+ oss:{n:'Forks and open source contribution',l:[['Contribute to an open-source project on GitHub',LEARN+'contribute-open-source/','Learn']]},
+ innersource:{n:'InnerSource',l:[['Manage an InnerSource program by using GitHub',LEARN+'manage-innersource-program-github/','Learn']]},
+ community:{n:'Community: Sponsors, Marketplace, topics',l:[['Exploring projects on GitHub',DOCS+'get-started/exploring-projects-on-github','Docs']]}
+};
+const TOPIC_OF={1:'git',2:'git',3:'git',4:'ghintro',5:'markdown',6:'products',7:'git',8:'git',9:'git',10:'markdown',11:'products',12:'ghintro',13:'git',
+14:'repos',15:'repos',16:'repos',17:'history',18:'repos',19:'repos',20:'repos',
+21:'prs',22:'sharing',23:'sharing',24:'notifications',25:'prs',26:'prs',
+27:'actions',28:'actions',29:'copilot',30:'copilot',31:'copilot',32:'codespaces',33:'codespaces',
+34:'projects',35:'projects',36:'projects',37:'projects',
+38:'auth',39:'admin',40:'auth',41:'secrepo',42:'admin',43:'admin',
+44:'oss',45:'innersource',46:'community',47:'community',
+48:'git',49:'git',50:'git',51:'git',52:'git',53:'git',54:'git',55:'products',56:'markdown',57:'markdown',58:'markdown',59:'markdown',60:'prs',61:'git',62:'git',63:'git',64:'ghintro',65:'git',66:'git',
+67:'repos',68:'repos',69:'repos',70:'repos',71:'notifications',72:'repos',73:'repos',74:'repos',75:'repos',76:'history',77:'repos',
+78:'prs',79:'issues',80:'prs',81:'issues',82:'prs',83:'prs',84:'sharing',85:'sharing',86:'notifications',87:'prs',88:'prs',89:'prs',
+90:'actions',91:'actions',92:'actions',93:'actions',94:'actions',95:'copilot',96:'copilot',97:'codespaces',98:'codespaces',99:'codespaces',100:'actions',101:'copilot',
+102:'projects',103:'projects',104:'projects',105:'projects',106:'projects',107:'projects',
+108:'auth',109:'secrepo',110:'admin',111:'admin',112:'admin',113:'secrepo',114:'auth',115:'admin',116:'admin',117:'admin',118:'admin',
+119:'oss',120:'community',121:'oss',122:'oss',123:'community',124:'oss'};
+Q.forEach(q=>{q.topic=TOPIC_OF[q.id]});
+
+return {Q:Q,DOMAINS:DOMAINS,EXAM_MIX:EXAM_MIX,TOPICS:TOPICS};
+})(),({
+ id:'gh900',code:'GH-900',name:'GitHub Foundations',
+ title:'GH-900 Practice Lab',
+ eyebrow:'Exam GH-900 · GitHub Foundations',
+ outline:'the January 2026 skills outline',
+ tips:[
+  'Read the instruction line. "Choose two" means exactly two.',
+  'Watch for NOT and EXCEPT in the stem.',
+  'In Yes or No sets, judge each statement on its own. Words like only, always and requires often make a statement false.',
+  'Answer everything. A blank cannot score, and there is no partial credit.',
+  'Flag a hard question and return to it from the question map.'
+ ],
+ links:[
+  ['Study guide for Exam GH-900','https://learn.microsoft.com/en-gb/credentials/certifications/resources/study-guides/gh-900','Guide'],
+  ['Exam sandbox, to try every question type','https://aka.ms/examdemo','Sandbox'],
+  ['GitHub Foundations learning path, part 1','https://learn.microsoft.com/en-us/training/paths/github-foundations/','Learn'],
+  ['GitHub Foundations learning path, part 2','https://learn.microsoft.com/en-us/training/paths/github-foundations-2/','Learn']
+ ]
+}));
+EXAMS.az400=Object.assign((function(){
+/* Shared helper that builds a question bank. Each question names a topic, and the topic fixes its domain. */
+function makeBank(TOPICS){
+  const Q=[];let n=0;
+  const YNQ='For each of the following statements, select Yes if the statement is true. Otherwise, select No.';
+  const add=(topic,o)=>{
+    if(!TOPICS[topic])throw new Error('Unknown topic '+topic);
+    o.topic=topic;o.d=TOPICS[topic].d;o.id=++n;Q.push(o);
+  };
+  return {
+    Q:Q,
+    mc:(topic,q,opts,a,why,code)=>add(topic,{t:'mc',q:q,opts:opts,a:a,why:why,code:code}),
+    multi:(topic,q,opts,a,why,code)=>add(topic,{t:'multi',q:q,opts:opts,a:a,why:why,code:code,k:a.length}),
+    yn:(topic,ctx,rows,why,code)=>add(topic,{t:'yn',q:ctx+' '+YNQ,rows:rows,why:why,code:code}),
+    dd:(topic,tpl,sels,why)=>add(topic,{t:'dd',q:'Complete the statement by selecting the correct option in each list.',tpl:tpl,sels:sels,why:why}),
+    ddc:(topic,instr,codeTpl,sels,why)=>add(topic,{t:'dd',q:instr,tpl:'',codeTpl:codeTpl,sels:sels,why:why}),
+    match:(topic,q,items,slots,why)=>add(topic,{t:'match',q:q,items:items,slots:slots,why:why}),
+    order:(topic,q,steps,why)=>add(topic,{t:'order',q:q,steps:steps,why:why})
+  };
+}
+
+const LEARN='https://learn.microsoft.com/en-us/training/modules/';
+const ADO='https://learn.microsoft.com/en-us/azure/devops/';
+const MON='https://learn.microsoft.com/en-us/azure/azure-monitor/';
+const KV='https://learn.microsoft.com/en-us/azure/key-vault/general/about-keys-secrets-certificates';
+const GHDEVOPS='https://learn.microsoft.com/en-us/azure/developer/github/integrate-azure-devops';
+
+const DOMAINS=[
+ {n:'Design and implement processes and communications',w:'10-15%'},
+ {n:'Design and implement a source control strategy',w:'10-15%'},
+ {n:'Design and implement build and release pipelines',w:'50-55%'},
+ {n:'Develop a security and compliance plan',w:'10-15%'},
+ {n:'Implement an instrumentation strategy',w:'5-10%'}
+];
+const EXAM_MIX=[6,6,26,7,5];
+
+const TOPICS={
+ flow:{d:1,n:'Work tracking and traceability',l:[['Plan Agile with GitHub Projects and Azure Boards',LEARN+'plan-agile-github-projects-azure-boards/','Learn'],['Azure Boards documentation',ADO+'boards/','Docs']]},
+ metrics:{d:1,n:'DevOps metrics, queries and dashboards',l:[['Develop monitor and status dashboards',LEARN+'develop-monitor-status-dashboards/','Learn'],['Implement tools to track usage and flow',LEARN+'implement-tools-track-usage-flow/','Learn'],['Azure Boards documentation',ADO+'boards/','Docs']]},
+ docs:{d:1,n:'Documentation, wikis and release notes',l:[['Share knowledge within teams',LEARN+'share-knowledge-within-teams/','Learn'],['Communicate effectively on GitHub using Markdown',LEARN+'communicate-using-markdown/','Learn']]},
+ integrations:{d:1,n:'Webhooks and tool integrations',l:[['Work with Azure DevOps and GitHub',GHDEVOPS,'Docs'],['Plan Agile with GitHub Projects and Azure Boards',LEARN+'plan-agile-github-projects-azure-boards/','Learn']]},
+ branching:{d:2,n:'Branching strategies',l:[['Design and implement branch strategies and workflows',LEARN+'manage-git-branches-workflows/','Learn'],['Azure Repos documentation',ADO+'repos/','Docs']]},
+ branchpol:{d:2,n:'Pull requests and branch policies',l:[['Collaborate with pull requests in Azure Repos',LEARN+'collaborate-pull-requests-azure-repos/','Learn'],['Manage repository changes by using pull requests on GitHub',LEARN+'manage-changes-pull-requests-github/','Learn']]},
+ repomgmt:{d:2,n:'Repository management, large files and history cleanup',l:[['Manage and configure repositories',LEARN+'manage-git-repositories/','Learn'],['Search and organize repository history by using GitHub',LEARN+'search-organize-repository-history-github/','Learn'],['Azure Repos documentation',ADO+'repos/','Docs']]},
+ packages:{d:3,n:'Package management and versioning',l:[['Azure DevOps documentation',ADO+'?view=azure-devops','Docs'],['DevOps resource center','https://learn.microsoft.com/en-us/devops/','Docs']]},
+ testing:{d:3,n:'Testing strategy, gates and code coverage',l:[['Automate inspection of health',LEARN+'automate-inspection-health/','Learn'],['Azure Pipelines documentation',ADO+'pipelines/','Docs']]},
+ pipelines:{d:3,n:'Azure Pipelines YAML, triggers and stages',l:[['Explore Azure Pipelines',LEARN+'explore-azure-pipelines/','Learn'],['Design and implement a pipeline strategy',LEARN+'implement-pipeline-strategy/','Learn'],['Describe pipelines and concurrency',LEARN+'describe-pipelines-concurrency/','Learn'],['Integrate with Azure Pipelines',LEARN+'integrate-azure-pipelines/','Learn']]},
+ agents:{d:3,n:'Agents, pools and runners',l:[['Manage Azure Pipeline agents and pools',LEARN+'manage-azure-pipeline-agents-pools/','Learn'],['Azure Pipelines documentation',ADO+'pipelines/','Docs']]},
+ actions:{d:3,n:'GitHub Actions workflows',l:[['Introduction to GitHub Actions',LEARN+'introduction-to-github-actions/','Learn'],['Learn continuous integration with GitHub Actions',LEARN+'learn-continuous-integration-github-actions/','Learn'],['Build and deploy applications to Azure by using GitHub Actions',LEARN+'github-actions-cd/','Learn']]},
+ reuse:{d:3,n:'Templates, variables and environments',l:[['Manage and modularize tasks and templates',LEARN+'manage-modularize-tasks-templates/','Learn'],['Configure and provision environments',LEARN+'configure-provision-environments/','Learn']]},
+ deploystrat:{d:3,n:'Deployment strategies and releases',l:[['Explore release strategy recommendations',LEARN+'explore-release-strategy-recommendations/','Learn'],['Create a release pipeline',LEARN+'create-release-pipeline-devops/','Learn']]},
+ containers:{d:3,n:'Container builds',l:[['Design a container build strategy',LEARN+'design-container-build-strategy/','Learn']]},
+ iac:{d:3,n:'Infrastructure as code',l:[['Explore infrastructure as code and configuration management',LEARN+'explore-infrastructure-code-configuration-management/','Learn'],['Create Azure resources by using ARM templates',LEARN+'create-azure-resources-using-azure-resource-manager-templates/','Learn'],['Implement Bicep',LEARN+'implement-bicep/','Learn'],['Implement Desired State Configuration (DSC)',LEARN+'implement-desired-state-configuration-dsc/','Learn']]},
+ maintain:{d:3,n:'Pipeline health, retention and optimization',l:[['Describe pipelines and concurrency',LEARN+'describe-pipelines-concurrency/','Learn'],['Azure Pipelines documentation',ADO+'pipelines/','Docs']]},
+ identity:{d:4,n:'Identity, service connections and access',l:[['Introduction to Secure DevOps',LEARN+'introduction-to-secure-devops/','Learn'],['Maintain a secure repository by using GitHub best practices',LEARN+'maintain-secure-repository-github/','Learn'],['Azure Pipelines documentation',ADO+'pipelines/','Docs']]},
+ secrets:{d:4,n:'Secrets, Key Vault and secretless authentication',l:[['Azure Key Vault keys, secrets and certificates overview',KV,'Docs'],['Introduction to Secure DevOps',LEARN+'introduction-to-secure-devops/','Learn']]},
+ scanning:{d:4,n:'Security and compliance scanning',l:[['Software composition analysis',LEARN+'software-composition-analysis/','Learn'],['Implement open-source software',LEARN+'implement-open-source-software-azure/','Learn'],['Security monitoring and governance',LEARN+'security-monitoring-and-governance/','Learn']]},
+ monitoring:{d:5,n:'Azure Monitor, Application Insights and alerts',l:[['Azure Monitor documentation',MON,'Docs'],['Design processes to automate application analytics',LEARN+'design-processes-automate-application-analytics/','Learn'],['Manage alerts, blameless retrospectives and a just culture',LEARN+'manage-alerts-blameless-retrospectives-just-culture/','Learn']]},
+ kql:{d:5,n:'Logs, metrics and KQL',l:[['Azure Monitor documentation',MON,'Docs'],['Design processes to automate application analytics',LEARN+'design-processes-automate-application-analytics/','Learn']]}
+};
+
+const B=makeBank(TOPICS);
+const Q=B.Q,mc=B.mc,multi=B.multi,yn=B.yn,dd=B.dd,ddc=B.ddc,match=B.match,order=B.order;
+
+/* ===== Domain 1: processes and communications ===== */
+
+mc('flow','A team wants every commit and pull request on GitHub to be linked to a work item in Azure Boards so they can trace code changes back to requirements. What should they do?',
+ ['Connect the repository to the Azure Boards project with the Azure Boards app, then mention work items with AB# in commits and pull requests','Create a webhook that copies each commit message into a new work item','Add a branch protection rule that requires a work item ID in every branch name','Export the commits to a CSV file and import them into Azure Boards each week'],0,
+ 'The Azure Boards app connects a GitHub repository to a project. A mention such as AB#123 in a commit, pull request or issue then creates a link to work item 123.');
+yn('flow','Statements about traceability and flow of work.',
+ [['A commit that mentions a work item can create a development link from the work item to the commit.',true],['GitHub flow keeps a long-lived develop branch alongside main.',false],['A pull request that uses a closing keyword such as Fixes #12 can close the issue when it is merged into the default branch.',true],['Azure Boards can only track work for repositories that are hosted in Azure Repos.',false]],
+ 'Mentions create links, and GitHub flow uses main plus short-lived branches. Closing keywords close the issue on merge. Azure Boards can connect to GitHub repositories as well.');
+mc('flow','Which description matches GitHub flow?',
+ ['Branch from main, commit changes, open a pull request, review, merge to main and deploy','Maintain separate develop, release and hotfix branches with scheduled merges','Commit directly to main with no review and no branches','Fork the repository for every change and send patches by email'],0,
+ 'GitHub flow is lightweight: main is always deployable and all changes arrive through short-lived branches and pull requests.');
+match('flow','Match each Azure Boards process to the situation it fits best. Some items are not used.',
+ ['Basic','Agile','Scrum','CMMI'],
+ [['Teams that plan work as product backlog items in sprints',2],['Teams that want the simplest set of work item types, such as issues and tasks',0],['Organisations that formally track requirements, change requests and risks',3]],
+ 'Scrum uses product backlog items, Basic uses issues and tasks, and CMMI adds formal requirements, change requests and risks. Agile (user stories) was not needed.');
+
+mc('metrics','Which metric measures the time from when work is first requested until it is delivered?',
+ ['Lead time','Cycle time','Change failure rate','Deployment frequency'],0,
+ 'Lead time covers the whole wait from request to delivery. Cycle time starts when work actually begins.');
+match('metrics','Match each DORA metric to what it measures. All items are used once.',
+ ['Deployment frequency','Lead time for changes','Change failure rate','Time to restore service'],
+ [['How often the team releases to production',0],['How long it takes a change to reach production after it is committed',1],['The percentage of deployments that cause a failure in production',2],['How quickly service is recovered after an incident',3]],
+ 'These are the four classic DORA delivery and stability measures.');
+mc('metrics','Which Azure Boards chart shows how many work items are in each state over time, so you can spot a bottleneck where work is piling up?',
+ ['Cumulative flow diagram','Burndown chart','Velocity chart','Sprint capacity chart'],0,
+ 'A cumulative flow diagram stacks work items by state. A widening band shows work accumulating in that state.');
+mc('metrics','A team lead wants a dashboard widget that shows how long work items take to move from active to closed. Which widget fits best?',
+ ['Cycle Time','Query tile','Markdown','Work links'],0,
+ 'The Cycle Time analytics widget reports how long items take to complete. Query tiles just count results.');
+dd('metrics','A {0} query returns work items as a simple list, and a {1} query shows work items with their parent and child hierarchy.',
+ [[['flat list','tree of work items','direct links'],0],[['flat list','tree of work items','direct links'],1]],
+ 'Azure Boards queries come as flat lists, trees of work items and direct links.');
+
+mc('docs','A team wants to draw a flowchart inside an Azure DevOps wiki page or a GitHub README without storing an image file. What should they use?',
+ ['A Mermaid diagram written as text in the page','An HTML iframe pointing at another site','A Visio file attached to the page','A PowerShell script that runs on page load'],0,
+ 'Mermaid draws diagrams from text. GitHub renders a mermaid code fence, and Azure DevOps wikis use a ::: mermaid block.');
+mc('docs','Which Azure DevOps wiki option publishes Markdown files that already live in a Git repository as a wiki?',
+ ['Publish code as wiki','Provisioned wiki','A dashboard Markdown widget','A pipeline artifact'],0,
+ 'Publish code as wiki points a wiki at a folder in a repository. The provisioned wiki is the built-in wiki created for the project.');
+mc('docs','How can a GitHub repository generate categorised release notes automatically when a release is published?',
+ ['Use generated release notes and define the categories in .github/release.yml','Enable the Wikis feature','Create a Discussion for each release','Add a CODEOWNERS entry for the release manager'],0,
+ 'GitHub can generate release notes from merged pull requests, and .github/release.yml groups them by label into categories.');
+
+mc('integrations','A team wants a Microsoft Teams channel to show a message when an Azure Pipelines run fails. What is the simplest approach?',
+ ['Add the Azure Pipelines app to the channel and subscribe to pipeline events','Write an Azure Function that polls the pipelines API every minute','Email the build log to every team member','Create a Teams meeting for each failed build'],0,
+ 'The Azure Pipelines app for Teams can subscribe a channel to pipeline events with no custom code.');
+mc('integrations','An external ticketing system must be notified whenever a pull request is merged in a GitHub repository. What should be configured?',
+ ['A repository webhook for pull request events','A branch protection rule','A CODEOWNERS file','A GitHub Pages site'],0,
+ 'A webhook sends an HTTP POST with the event payload to a URL you choose when the selected events occur.');
+yn('integrations','Statements about webhooks and service hooks.',
+ [['A webhook delivers an HTTP POST request to a URL you configure when a selected event happens.',true],['Azure DevOps service hooks can send events to services such as webhooks, Slack and Microsoft Teams.',true],['A webhook secret lets the receiver verify that a payload came from the expected sender.',true],['A webhook can only be created by using the GitHub CLI.',false]],
+ 'Webhooks and service hooks push event data to other services. Secrets let the receiver validate the sender, and webhooks can be created in the web interface or API.');
+
+/* ===== Domain 2: source control strategy ===== */
+
+mc('branching','A team deploys to production several times a day from a single main branch, hides unfinished work behind feature flags and merges short-lived branches within a day. Which strategy is this?',
+ ['Trunk-based development','Release branching','Git flow','A fork for every developer'],0,
+ 'Trunk-based development keeps everyone integrating into one main branch in small, frequent changes.');
+mc('branching','A product supports several customer-facing versions at once, and security fixes must be applied to older versions. Which branching approach fits best?',
+ ['Release branches for each supported version','Trunk-based development with no release branches','One long-lived feature branch','Developers commit directly to production'],0,
+ 'Release branches let the team stabilise and patch a specific version while main moves on.');
+match('branching','Match each branching strategy to its description. All items are used once.',
+ ['Trunk-based','Feature branch','Release branch'],
+ [['Developers integrate small changes into main very often, usually behind feature flags',0],['Each change is developed in isolation and merged by pull request when complete',1],['A branch is cut to stabilise and maintain a specific version while main moves on',2]],
+ 'Each strategy trades isolation against integration frequency.');
+dd('branching','In Git flow, the {0} branch holds released code, and the {1} branch is where completed features are integrated.',
+ [[['develop','main','release','hotfix'],1],[['develop','main','release','hotfix'],0]],
+ 'Git flow has two long-lived branches: main for released code and develop for integration. GitHub flow has only main.');
+
+mc('branchpol','In Azure Repos, which branch policy makes sure the code builds and tests pass before a pull request can complete?',
+ ['Build validation','Minimum number of reviewers','Check for linked work items','Limit merge types'],0,
+ 'Build validation queues a pipeline run for the pull request and can block completion if it fails.');
+multi('branchpol','Which TWO branch policies can you configure in Azure Repos to improve the quality of pull requests?',
+ ['Require a minimum number of reviewers','Require comment resolution','Allow force pushes for every contributor','Turn off work item linking'],[0,1],
+ 'Reviewer counts and comment resolution are branch policies. Force pushing is a permission, and allowing it for everyone weakens protection.');
+mc('branchpol','A GitHub repository must have a linear history on main with no merge commits. Which branch protection setting enforces this?',
+ ['Require linear history','Require signed commits','Require deployments to succeed','Lock branch'],0,
+ 'Require linear history blocks merge commits, so pull requests can only be squashed or rebased.');
+yn('branchpol','Statements about pull requests and branch protection.',
+ [['In Azure Repos Git, a pull request build is triggered by a build validation branch policy rather than the pr keyword in YAML.',true],['A GitHub branch protection rule can require status checks to pass before merging.',true],['Administrators can never bypass branch protection under any configuration.',false],['Squash merge keeps every individual commit of the source branch in the target history.',false]],
+ 'The pr keyword is for GitHub and Bitbucket. Administrators can bypass unless rules are enforced for them, and squash merge combines commits into one.');
+mc('branchpol','Which merge type in Azure Repos combines all commits of a pull request into a single commit on the target branch?',
+ ['Squash merge','Basic merge (no fast-forward)','Rebase and fast-forward','Rebase with merge commit'],0,
+ 'Squash merge produces one commit on the target branch. The other types keep the individual commits in some form.');
+
+mc('repomgmt','A repository contains large binary design files that make clones slow. Which feature stores the files outside normal Git history and keeps small pointer files in the repository?',
+ ['Git Large File Storage (LFS)','Git submodules','git stash','Shallow tags'],0,
+ 'Git LFS replaces large files with text pointers and stores the real content on a separate server.');
+mc('repomgmt','A secret was committed several commits ago and has already been pushed. After rotating the secret, which action removes it from the repository history?',
+ ['Rewrite history with git filter-repo or BFG Repo-Cleaner, then force push','Run git revert on the commit','Delete the file in a new commit','Add the file to .gitignore'],0,
+ 'Revert, deleting the file and .gitignore leave the secret in earlier commits. Rewriting history removes it, and rotating the secret first is still essential.');
+mc('repomgmt','You reset a branch by mistake and lost three local commits. Which command helps you find their commit IDs?',
+ ['git reflog','git blame','git remote -v','git tag --list'],0,
+ 'The reflog records where HEAD and branches have pointed, so lost commits can usually be found and restored for a while.');
+mc('repomgmt','A very large monorepo is slow to clone and work in. Which Microsoft tool uses partial clone, sparse checkout and background maintenance to help?',
+ ['Scalar','git-fat','Git hooks','Azure Artifacts'],0,
+ 'Scalar configures Git features that make very large repositories faster, and it ships with Git.');
+match('repomgmt','Match each Git command to its purpose when fixing mistakes. All items are used once.',
+ ['git revert','git reset','git cherry-pick','git reflog'],
+ [['Create a new commit that undoes an earlier commit without rewriting history',0],['Move the current branch pointer to another commit',1],['Apply the changes from one commit onto the current branch',2],['Show where HEAD has previously pointed',3]],
+ 'Revert is safe on shared branches because it adds a commit instead of rewriting history.');
+mc('repomgmt','Which command creates an annotated tag with a message for release 1.2.0?',
+ ['git tag -a v1.2.0 -m "Release 1.2.0"','git branch v1.2.0','git commit --tag v1.2.0','git stash v1.2.0'],0,
+ 'Annotated tags store the tagger, date and a message, which makes them suitable for releases.');
+
+/* ===== Domain 3: build and release pipelines ===== */
+
+mc('packages','A team wants to share internal NuGet and npm packages and also consume public packages through a controlled source. Which Azure DevOps feature provides this?',
+ ['Azure Artifacts feeds with upstream sources','Azure Boards queries','Azure Test Plans','Pipeline variable groups'],0,
+ 'Azure Artifacts feeds host internal packages and can use upstream sources such as npmjs and NuGet.org.');
+mc('packages','A package version 2.4.1 contains only a backward-compatible bug fix. Using semantic versioning, what should the next version be?',
+ ['2.4.2','2.5.0','3.0.0','2.4.1.1'],0,
+ 'Semantic versioning is MAJOR.MINOR.PATCH. A compatible bug fix increments PATCH.');
+mc('packages','Which version string uses calendar versioning (CalVer)?',
+ ['2026.10.2','2.4.1','1.0.0-rc.1','v2-beta'],0,
+ 'CalVer builds the version from a date. The others follow semantic versioning or are labels.');
+mc('packages','In Azure Artifacts, how can a team promote a package version from testing to production use without republishing it?',
+ ['Promote the version to a feed view such as @Release','Rename the package','Copy it to another organization','Delete and re-upload the package'],0,
+ 'Feed views such as @Local, @Prerelease and @Release let you control which versions consumers see without changing the package.');
+mc('packages','A GitHub Actions workflow publishes a container image to GitHub Packages. Which credential is the most appropriate and least privileged?',
+ ['GITHUB_TOKEN with packages: write permission','A personal access token belonging to an administrator','The repository deploy key','The organization owner\'s password'],0,
+ 'GITHUB_TOKEN is created per run, scoped by the permissions key and expires with the job.');
+mc('packages','What does the publish step in this pipeline do?',
+ ['Uploads the folder as a pipeline artifact named drop that later stages can download','Pushes the folder to Azure Artifacts as a NuGet package','Commits the folder to the repository','Deploys the folder to production'],0,
+ 'The publish shortcut uploads a pipeline artifact. It is not a package feed, and it does not deploy anything by itself.',
+ 'steps:\n- script: dotnet publish -o $(Build.ArtifactStagingDirectory)\n- publish: $(Build.ArtifactStagingDirectory)\n  artifact: drop');
+
+mc('testing','Which type of test is the best candidate to run on every commit because it is fast and isolated?',
+ ['Unit tests','Load tests','Manual exploratory tests','Penetration tests'],0,
+ 'Unit tests are quick and need no external environment, so they give the fastest feedback in CI.');
+mc('testing','Which task publishes unit test results so they appear on the Tests tab of a pipeline run?',
+ ['PublishTestResults','PublishPipelineArtifact','CopyFiles','ManualValidation'],0,
+ 'The Publish Test Results task reads result files such as JUnit or VSTest output and shows them in the run.');
+mc('testing','A team wants to simulate thousands of concurrent users before release and fail the pipeline if response time targets are missed. Which Azure service integrates with CI/CD for this?',
+ ['Azure Load Testing','Azure Advisor','Azure Policy','Azure Service Health'],0,
+ 'Azure Load Testing runs scalable load tests, such as JMeter scripts, with pass or fail criteria that can gate a pipeline.');
+mc('testing','Which check on an Azure Pipelines environment can block a deployment while Azure Monitor alerts are active?',
+ ['Query Azure Monitor alerts','Business hours','Branch control','Exclusive lock'],0,
+ 'The Query Azure Monitor alerts check evaluates the alerts on your resources and fails the check if any are active.');
+multi('testing','Which TWO steps are needed to show code coverage results on a pipeline run?',
+ ['Run the tests with code coverage collection enabled','Publish the coverage results with the PublishCodeCoverageResults task','Add a CODEOWNERS file','Create a feed view'],[0,1],
+ 'Coverage must be collected during the test run and then published so the run can display it.');
+yn('testing','Statements about approvals and gates.',
+ [['A pre-deployment approval pauses a stage until a person approves it.',true],['Gates evaluate automated conditions such as a REST API result or an Azure Monitor alert query.',true],['Approvals and gates can be used together on the same stage.',true],['Gates can only be used before the first stage of a pipeline.',false]],
+ 'Approvals involve people, gates are automated, and both can apply before or after deployment on any stage.');
+order('testing','Arrange the test types from the largest number of tests to the smallest, as in the test pyramid.',
+ ['Unit tests','Integration tests','End-to-end UI tests'],
+ 'The pyramid has many fast unit tests at the base and few slow UI tests at the top.');
+
+mc('pipelines','A commit that only changes files under docs/ is pushed to main. What happens?',
+ ['The pipeline does not run','The pipeline runs but skips every job','The pipeline runs and deploys to production','The pipeline waits for manual approval'],0,
+ 'The path filter excludes docs/*, so a push that only touches that folder does not trigger the pipeline.',
+ 'trigger:\n  branches:\n    include:\n      - main\n  paths:\n    exclude:\n      - docs/*');
+mc('pipelines','For a repository in Azure Repos Git, how do you make a pipeline run when a pull request targets main?',
+ ['Add a build validation branch policy on main','Add a pr: section to the YAML file','Add a schedules: section','Enable the project wiki'],0,
+ 'The pr keyword is supported for GitHub and Bitbucket Cloud. Azure Repos Git uses build validation branch policies.');
+mc('pipelines','When does this schedule run?',
+ ['At 02:00 UTC on weekdays, only if there are changes since the last successful scheduled run','At 02:00 UTC every day whether or not the code changed','At 02:00 local time on weekends','Every two hours on weekdays'],0,
+ 'Cron expressions use UTC, and always: false skips the run when nothing has changed since the last scheduled run succeeded.',
+ 'schedules:\n- cron: "0 2 * * 1-5"\n  displayName: Nightly build\n  branches:\n    include:\n    - main\n  always: false');
+ddc('pipelines','Complete the YAML so that the Deploy stage starts only after the Build stage succeeds and only for the main branch.',
+ 'stages:\n- stage: Build\n  jobs:\n  - job: BuildJob\n    steps:\n    - script: echo build\n- stage: Deploy\n  {0}: Build\n  condition: and(succeeded(), eq(variables[\'Build.SourceBranch\'], \'{1}\'))\n  jobs:\n  - job: DeployJob\n    steps:\n    - script: echo deploy',
+ [[['needs','dependsOn','requires','after'],1],[['main','refs/tags/main','refs/heads/main','heads/main'],2]],
+ 'Stages declare ordering with dependsOn. The full source branch name is refs/heads/main.');
+mc('pipelines','By default, how do the jobs in one stage of a YAML pipeline run?',
+ ['In parallel, unless dependsOn is set, subject to available parallel jobs','Sequentially, in the order written','Only one job per stage is allowed','Only on self-hosted agents'],0,
+ 'Stages run in order by default, but jobs in a stage have no dependencies unless you add them and can run at the same time.');
+dd('pipelines','In a multi-stage pipeline, {0} run one after another by default, while {1} in the same stage can run at the same time if enough parallel jobs are available.',
+ [[['stages','jobs','steps','tasks'],0],[['stages','jobs','steps','tasks'],1]],
+ 'Stages are sequential by default. Jobs within a stage are parallel unless dependencies say otherwise. Steps always run in order on one agent.');
+mc('pipelines','What does this job configuration do?',
+ ['Runs the job twice in parallel, once on a Linux image and once on a Windows image','Runs the job once on whichever image is free first','Runs on Linux, then on Windows only if the first run fails','Creates two stages named linux and windows'],0,
+ 'A matrix strategy creates one job per entry. Each job gets its own value of imageName.',
+ 'strategy:\n  matrix:\n    linux:\n      imageName: ubuntu-latest\n    windows:\n      imageName: windows-latest\npool:\n  vmImage: $(imageName)');
+mc('pipelines','One pipeline must run automatically after another pipeline completes successfully. Which YAML feature defines this?',
+ ['A pipeline resource with a trigger','A schedules block','A pr trigger','A variable group'],0,
+ 'Declaring the other pipeline under resources with a trigger starts this one when the upstream run completes.');
+match('pipelines','Match each expression syntax to when it is evaluated. All items are used once.',
+ ['$(var)','${{ var }}','$[ var ]'],
+ [['Macro syntax, replaced with the value just before a task runs',0],['Template expression, evaluated when the YAML is compiled',1],['Runtime expression, evaluated while the pipeline runs and used in conditions or variable assignments',2]],
+ 'The three syntaxes are processed at different times, which decides where each one can be used.');
+mc('pipelines','Which option pauses a YAML pipeline for manual approval without using an environment check?',
+ ['The ManualValidation task in an agentless (server) job','The Delay task in an agent job','The PublishPipelineArtifact task','The CopyFiles task'],0,
+ 'ManualValidation runs in an agentless job, waits for a reviewer to resume or reject, and can time out.');
+yn('pipelines','Statements about YAML pipelines.',
+ [['A pipeline can contain several stages, and each stage can contain several jobs.',true],['The steps in a job run in order on the same agent.',true],['succeeded() is the default condition for a step.',true],['A variable marked as secret is automatically available to scripts as an environment variable.',false]],
+ 'Secret variables are not mapped into the environment for scripts automatically. You must pass them explicitly, for example with env.');
+
+mc('agents','A build needs software licensed to a specific network and must reach a database inside a private virtual network. Which agent option is most suitable?',
+ ['Self-hosted agents inside that network','Microsoft-hosted agents','GitHub Pages','Agents in a different organization'],0,
+ 'Self-hosted agents run in your own environment, so they can use licensed software and private network resources.');
+mc('agents','A team wants build agents on Azure that scale out automatically and scale in when idle. Which option fits?',
+ ['An Azure virtual machine scale set agent pool','A single always-on virtual machine','The developers\' laptops','Microsoft-hosted agents with manual scaling'],0,
+ 'Scale set agent pools let Azure Pipelines create and delete VMs to match demand. Managed DevOps Pools is a newer managed alternative.');
+mc('agents','Which agent will run this job?',
+ ['A self-hosted agent in the BuildPool pool that has the docker capability','A Microsoft-hosted agent with Docker preinstalled','Any agent in the organization','The first agent in the Default pool'],0,
+ 'name selects a self-hosted pool, and demands filters agents to those that advertise the required capability.',
+ 'pool:\n  name: BuildPool\n  demands:\n    - docker');
+mc('agents','A GitHub organization must control which repositories can use a set of self-hosted runners. What should it configure?',
+ ['Runner groups','Branch protection rules','Dependabot alerts','Deployment environments'],0,
+ 'Runner groups restrict which repositories and workflows can use a set of runners.');
+mc('agents','A security team wants each job to run on a fresh runner that is removed afterwards so no state leaks between jobs. Which self-hosted runner approach fits?',
+ ['Ephemeral runners that take one job and are then removed','One long-lived runner shared by every repository','Running jobs directly on developers\' machines','A persistent runner with cleanup scripts only'],0,
+ 'Ephemeral runners register for a single job, which prevents one job from affecting the next.');
+
+mc('actions','Which statement about this workflow trigger is true?',
+ ['The workflow can also be started manually from the Actions tab','The workflow only runs for the main branch','The workflow runs on a schedule at midnight','The workflow runs only for forks'],0,
+ 'workflow_dispatch adds a manual trigger. The pull_request event has no branch filter here, so it applies to all pull requests.',
+ 'on:\n  push:\n    branches: [ main ]\n  pull_request:\n  workflow_dispatch:');
+mc('actions','A job must sign in to Azure from GitHub Actions without a stored long-lived secret. What is required?',
+ ['permissions: id-token: write, and an Entra app with a federated credential used through azure/login','A service principal password in a repository secret rotated every year','A personal access token','A certificate committed to the repository'],0,
+ 'OpenID Connect lets the job request a short-lived token that Entra ID trusts through a federated credential.');
+ddc('actions','Complete the workflow so that the job can request an OIDC token and uses the protection rules of the production deployment environment.',
+ 'permissions:\n  {0}: write\n  contents: read\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    {1}: production\n    steps:\n      - uses: azure/login@v2',
+ [[['id-token','tokens','oidc','actions'],0],[['stage','target','environment','gate'],2]],
+ 'id-token: write allows the job to request an OIDC token. The environment key applies required reviewers and environment secrets.');
+mc('actions','A job must run only after the build and test jobs succeed. Which keyword defines this?',
+ ['needs: [build, test]','depends: [build, test]','after: [build, test]','requires: [build, test]'],0,
+ 'In GitHub Actions, needs lists the jobs that must finish first. Azure Pipelines uses dependsOn.');
+mc('actions','How can a team reuse the same set of jobs from the workflows of several repositories?',
+ ['Create a reusable workflow that uses the workflow_call trigger','Copy the YAML into each repository by hand','Use a CODEOWNERS file','Publish a GitHub Pages site'],0,
+ 'A reusable workflow is called from another workflow, which keeps logic in one place.');
+multi('actions','Which TWO approaches run a job on more than one operating system in GitHub Actions?',
+ ['Use strategy.matrix with an os list and runs-on: ${{ matrix.os }}','Define separate jobs with different runs-on values','Set runs-on to a list of operating systems with no matrix','Add a CODEOWNERS entry for each operating system'],[0,1],
+ 'A matrix or separate jobs each target one runner type. A list in runs-on selects a single runner that has all those labels.');
+mc('actions','A workflow should cancel an older run when a newer commit is pushed to the same branch, so only the latest run executes. Which setting helps?',
+ ['concurrency with cancel-in-progress: true','timeout-minutes','continue-on-error','needs'],0,
+ 'A concurrency group allows only one run at a time, and cancel-in-progress cancels the older one.');
+yn('actions','Statements about GitHub Actions security.',
+ [['The GITHUB_TOKEN is created for each workflow run and expires when the job finishes.',true],['Repository secrets are passed to workflows triggered by pull requests from forks by default.',false],['Workflow permissions can be limited to the minimum needed by using the permissions key.',true],['Environment secrets can be protected by requiring reviewers before the job is allowed to use them.',true]],
+ 'Secrets are withheld from fork pull requests by default, and environment protection rules gate access to environment secrets.');
+
+mc('reuse','What is a benefit of using extends with a template like this one?',
+ ['The pipeline author cannot skip or change the steps the template enforces, which supports central governance','It merges the pipeline into the main branch','It creates a variable group automatically','It runs the pipeline on every branch'],0,
+ 'With extends, the template controls the structure. Combined with a required template check, it enforces standard steps.',
+ 'extends:\n  template: templates/secure-build.yml\n  parameters:\n    buildConfiguration: Release');
+mc('reuse','Several pipelines need the same non-secret values and a secret held in Azure Key Vault. Where should these be defined so they can be shared?',
+ ['In a variable group, optionally linked to Azure Key Vault','Separately in each pipeline YAML file','In the repository README','In a pipeline artifact'],0,
+ 'Variable groups in the Library are shared across pipelines, and they can pull secrets from Key Vault at run time.');
+mc('reuse','Which feature lets a team require approvals, branch control and business hours checks before a pipeline deploys to production?',
+ ['Environment checks and approvals','Variable groups','Pipeline caching','Task groups'],0,
+ 'Checks and approvals are configured on the environment resource, so every pipeline that deploys there must pass them.');
+match('reuse','Match each environment check to what it does. Some items are not used.',
+ ['Approvals','Branch control','Business hours','Exclusive lock'],
+ [['Pauses deployment until a named person or group approves',0],['Allows deployment only from specified branches',1],['Allows deployment only during a defined time window',2]],
+ 'Exclusive lock allows one run at a time, which was not described.');
+dd('reuse','Use {0} to reuse a set of steps, jobs or stages in YAML pipelines, and {1} to reuse a sequence of tasks in classic pipelines.',
+ [[['task groups','templates','variable groups','service connections'],1],[['task groups','templates','variable groups','service connections'],0]],
+ 'YAML templates replace task groups, which belong to classic pipelines.');
+mc('reuse','A template needs a value from the calling pipeline, such as the build configuration. What should the template declare?',
+ ['A parameter','A secure file','A service connection','A deployment job'],0,
+ 'Parameters pass typed values from the caller into a template.');
+mc('reuse','A later job on a different agent needs a value calculated in an earlier job. How can it get the value?',
+ ['Set the variable in a step with isOutput=true, then reference it through dependencies in the later job','Read it from the earlier agent\'s environment variables, which jobs share','Write it to the README','Use a task group'],0,
+ 'Jobs can run on different machines, so they exchange values through output variables rather than a shared environment.');
+
+match('deploystrat','Match each deployment pattern to its description. All items are used once.',
+ ['Blue-green','Canary','Ring-based','A/B testing'],
+ [['Two identical environments, with traffic switched from the old to the new in one step',0],['A small percentage of users get the new version first, and exposure grows if it is healthy',1],['Deployment progresses through concentric groups, such as internal users, early adopters, then everyone',2],['Different users see different variations so behaviour can be compared',3]],
+ 'Canary limits blast radius by percentage, ring-based by audience, blue-green by environment swap, and A/B testing compares variants.');
+mc('deploystrat','An App Service app must be deployed with no downtime and a quick rollback. Which feature should be used?',
+ ['Deployment slots with a swap','Stopping the app, copying files and starting it','Restarting the only instance after deploying to production','Deleting and re-creating the app'],0,
+ 'Deploy to a staging slot, warm it up, then swap. Swapping back is the rollback.');
+mc('deploystrat','Which Azure service can store feature flags so a feature can be switched on for a percentage of users without redeploying?',
+ ['Azure App Configuration (feature management)','Azure Key Vault','Azure Policy','Azure Artifacts'],0,
+ 'App Configuration holds feature flags and filters, and the feature management libraries evaluate them.');
+mc('deploystrat','A critical bug is found in the version running in production. Which approach lets the team ship a fix without releasing unfinished work on main?',
+ ['Branch from the production release or tag, fix, deploy, then merge the fix back','Deploy main with all unfinished features','Disable the pipeline and edit production by hand','Revert every commit from the last month'],0,
+ 'A hotfix path starts from what is in production, so only the fix ships, and the change is merged back to avoid regression.');
+mc('deploystrat','A pipeline deploys a database schema change together with application code during a rolling deployment. Which approach reduces the risk of failures?',
+ ['Make schema changes backward compatible so old and new versions work during the rollout','Drop the old columns before deploying the app','Deploy the database after the old app is removed','Apply schema changes manually in production'],0,
+ 'During a rollout both versions run, so use expand and contract changes that both can tolerate.');
+yn('deploystrat','Statements about deployment strategies.',
+ [['Blue-green deployment keeps the previous version available so traffic can be switched back.',true],['A canary release exposes the new version to all users at once.',false],['A rolling deployment updates instances in batches so some instances keep serving traffic.',true],['Feature flags require a new deployment every time a flag is changed.',false]],
+ 'Flags are evaluated at run time, so toggling does not need a deployment. Canary releases expose a small group first.');
+order('deploystrat','Arrange the steps of an App Service deployment slot release.',
+ ['Deploy the new version to the staging slot','Run smoke tests and warm up the staging slot','Swap the staging slot with production','Monitor the app and swap back if problems appear'],
+ 'Validate in staging first. The swap puts the warmed-up version into production, and swapping back is the rollback.');
+ddc('deploystrat','Complete the deployment job so that it runs its steps once with no rollout controls.',
+ '- deployment: DeployWeb\n  environment: production\n  strategy:\n    {0}:\n      deploy:\n        steps:\n        - script: echo deploying',
+ [[['rolling','canary','runOnce','blueGreen'],2]],
+ 'runOnce runs the lifecycle hooks once. Rolling and canary add rollout behaviour, and blueGreen is not a YAML strategy keyword.');
+mc('deploystrat','A team deploys to Azure Kubernetes Service and sends 10 percent of traffic to the new version first. Which strategy is this?',
+ ['Canary','Blue-green','Recreate','Big bang'],0,
+ 'A canary release sends a small share of traffic to the new version and increases it if metrics stay healthy.');
+
+mc('containers','Which Dockerfile technique reduces the final image size by separating build tools from the runtime image?',
+ ['Multi-stage builds','Adding more layers','Running as root','Using only the latest tag'],0,
+ 'A multi-stage build compiles in one stage and copies only the output into a smaller runtime stage.');
+mc('containers','A pipeline builds a container image and must publish it to a private registry in Azure. Which service should it use?',
+ ['Azure Container Registry','An Azure Artifacts NuGet feed','Azure Blob Storage static website','Azure Key Vault'],0,
+ 'Azure Container Registry stores and manages private container images and can also scan them.');
+
+mc('iac','Which statement best describes Bicep?',
+ ['A domain-specific language that compiles to ARM templates for deploying Azure resources','A tool that monitors Azure virtual machines','A package manager for npm','A JSON editor for pipelines'],0,
+ 'Bicep is a more concise way to author ARM deployments, and it transpiles to ARM JSON.');
+mc('iac','Before deploying a Bicep file to production, a team wants to preview which resources would be created, modified or deleted. What should they use?',
+ ['The what-if operation','az group delete','git blame','Azure Test Plans'],0,
+ 'what-if compares the template with the current state and reports the changes without deploying.');
+mc('iac','An ARM template deployment must delete resources in the resource group that are not defined in the template. Which deployment mode is required?',
+ ['Complete','Incremental','Validate','Preview'],0,
+ 'Complete mode removes resources not in the template. Incremental leaves them alone.');
+match('iac','Match each technology to its role. Some items are not used.',
+ ['ARM templates','Bicep','Azure Automation State Configuration','Azure Machine Configuration','Azure Boards'],
+ [['Declarative JSON templates for Azure resources',0],['A concise language that compiles into ARM JSON',1],['Pulls DSC configurations to nodes from an Azure Automation service',2],['Audits and applies desired state settings inside Azure and Arc-enabled machines',3]],
+ 'Azure Boards is a work tracking tool and has no role in infrastructure configuration.');
+mc('iac','Developers need to create their own pre-approved Azure environments on demand from templates defined by the platform team. Which service supports this?',
+ ['Azure Deployment Environments','Azure Service Health','Azure Advisor','Azure Cost Management'],0,
+ 'Azure Deployment Environments lets platform teams publish environment definitions that developers deploy on demand.');
+ddc('iac','Complete the Bicep file so that the storage account uses the location parameter.',
+ 'param location string = resourceGroup().location\n\nresource sa \'Microsoft.Storage/storageAccounts@2023-01-01\' = {\n  name: \'stg${uniqueString(resourceGroup().id)}\'\n  location: {0}\n  sku: { name: \'Standard_LRS\' }\n  kind: \'StorageV2\'\n}',
+ [[['$location','${location}','location','param.location'],2]],
+ 'Bicep refers to a parameter by its plain symbolic name.');
+mc('iac','What is the main benefit of storing infrastructure definitions in source control and deploying them from a pipeline?',
+ ['Changes are reviewed, versioned, repeatable and auditable','Pipelines no longer need any permissions','Resources are deployed without testing','Manual portal changes are copied back into Git automatically'],0,
+ 'Infrastructure as code brings the review and history of source control to environments.');
+
+mc('maintain','A team sees tests that sometimes fail and then pass on a rerun. Which Azure Pipelines capability helps find and manage them?',
+ ['Flaky test management in test analytics','Release gates','Branch policies','Secure files'],0,
+ 'Azure Pipelines can detect flaky tests and let you mark them so they do not block builds unnecessarily.');
+mc('maintain','Which setting controls how long pipeline runs and their artifacts are kept?',
+ ['Retention policies','Variable groups','Agent capabilities','Service hooks'],0,
+ 'Retention settings define how long runs are kept before cleanup, and runs can be retained individually.');
+mc('maintain','A pipeline takes 40 minutes, mostly restoring the same packages on every run. What should the team add?',
+ ['Pipeline caching of the package folder','More approval checks','A second repository','A longer commit message'],0,
+ 'The Cache task restores a saved copy of the dependencies when the key matches, saving restore time.');
+mc('maintain','Where can a team see pipeline pass rate, run duration and failure trends?',
+ ['Pipeline analytics reports','Azure Boards backlogs','The project wiki','Repository insights'],0,
+ 'Pipeline reports show pass rate, duration and failures so you can find slow or unreliable pipelines.');
+mc('maintain','A team still uses classic release pipelines. Which migration target best matches current Azure Pipelines guidance?',
+ ['Multi-stage YAML pipelines that use environments','Manual deployments from laptops','Azure Boards queries','Project wikis'],0,
+ 'YAML pipelines keep the definition in source control and use environments for approvals and checks.');
+
+/* ===== Domain 4: security and compliance ===== */
+
+mc('identity','A pipeline deploys to Azure. Which credential approach removes the need to store and rotate a secret?',
+ ['A service connection that uses workload identity federation','A service principal with a client secret saved in a variable','A personal access token','A shared administrator account'],0,
+ 'Workload identity federation exchanges a trusted token for access, so no long-lived secret exists.');
+mc('identity','A self-hosted agent runs on an Azure VM and must read secrets from Key Vault without any credentials in code. What should be used?',
+ ['A managed identity assigned to the VM','A stored username and password','A personal access token','A connection string in the pipeline file'],0,
+ 'Managed identities give Azure resources an identity in Entra ID with no credentials to manage.');
+match('identity','Match each identity type to its description. All items are used once.',
+ ['System-assigned managed identity','User-assigned managed identity','Service principal'],
+ [['Created with a resource and deleted when the resource is deleted',0],['A standalone identity that can be assigned to several resources',1],['An application identity in Entra ID that signs in with a credential or federated credential',2]],
+ 'System-assigned identities share the resource lifecycle. User-assigned identities are independent and reusable.');
+mc('identity','In Azure DevOps, a user is in one group where Contribute is set to Allow and in another where Contribute is set to Deny for the same repository. What is the effective permission?',
+ ['Deny','Allow','Not set','Whichever group is older'],0,
+ 'An explicit Deny takes precedence over Allow when a user belongs to both groups.');
+mc('identity','A partner developer needs to contribute to one GitHub repository but must not see other repositories in the organization. What access should be granted?',
+ ['Outside collaborator on that repository','Organization owner','Billing manager','Member of every team'],0,
+ 'Outside collaborators are given access to specific repositories without becoming organization members.');
+mc('identity','Which Azure DevOps access level gives free, limited access suited to people who only need basic Boards functionality?',
+ ['Stakeholder','Basic + Test Plans','Visual Studio Enterprise subscriber','Basic with extensions'],0,
+ 'Stakeholder access is free and restricts which features a user can use. Basic and above are licensed.');
+mc('identity','An automation must call the GitHub API as an app rather than as a person, using short-lived, narrowly scoped tokens. What should be used?',
+ ['A GitHub App','A classic personal access token','An administrator\'s SSH key','The owner\'s password'],0,
+ 'GitHub Apps get permissions of their own and mint short-lived installation tokens.');
+
+mc('secrets','A pipeline needs a signing certificate file during a build, and the file must not be stored in the repository. Where can it be stored?',
+ ['Secure files in the Azure Pipelines library','The repository docs folder','A work item attachment','The project wiki'],0,
+ 'Secure files are encrypted at rest and downloaded to the agent by the Download Secure File task.');
+mc('secrets','How can an Azure Pipelines run use a Key Vault secret at run time?',
+ ['Use the Azure Key Vault task or a variable group linked to Key Vault','Hard-code the value in the YAML file','Email it to the agent','Store it in a pipeline artifact'],0,
+ 'Both options fetch the secret at run time using a service connection, so it never sits in source control.');
+mc('secrets','A script step prints a variable that holds a secret, and the value shows in plain text in the logs. What prevents this?',
+ ['Mark the variable as a secret so it is masked, and avoid echoing it','Increase log verbosity','Rename the variable to uppercase','Store it in the README'],0,
+ 'Secret variables are masked in logs. Still, avoid printing them, because masking can be bypassed by transforming the value.');
+yn('secrets','Statements about secretless authentication.',
+ [['OpenID Connect lets a workflow request a short-lived token instead of storing a cloud credential.',true],['A federated credential trusts tokens from a specific issuer and subject, such as a repository and environment.',true],['Workload identity federation requires a client secret stored in the pipeline.',false],['Federated credentials remove the need for any role assignment on the Azure subscription.',false]],
+ 'Federation removes stored secrets, but the identity still needs role assignments to do anything.');
+mc('secrets','A GitHub secret must be available only to the production deployment job, and only after approval. What should be used?',
+ ['Environment secrets with required reviewers','Repository variables','A public gist','The README'],0,
+ 'Environment secrets are released to a job only after the environment protection rules, such as reviewers, pass.');
+
+match('scanning','Match each GitHub Advanced Security feature to its purpose. All items are used once.',
+ ['Code scanning','Secret scanning','Dependency review','Dependabot alerts'],
+ [['Finds vulnerabilities in your own code, for example with CodeQL',0],['Detects credentials committed to a repository and can block pushes with push protection',1],['Shows the security and licence impact of dependency changes in a pull request',2],['Notifies you about known vulnerabilities in the open-source packages you depend on',3]],
+ 'Each feature covers a different part of the supply chain: your code, your secrets, changes to dependencies and known vulnerabilities.');
+mc('scanning','A team wants Dependabot to open pull requests that update vulnerable dependencies automatically. Which feature is this?',
+ ['Dependabot security updates','Dependabot alerts only','Secret scanning','CodeQL'],0,
+ 'Alerts notify you. Security updates raise pull requests to fix vulnerable dependencies, and version updates keep packages current.');
+mc('scanning','Which file configures Dependabot version updates for a repository?',
+ ['.github/dependabot.yml','.github/CODEOWNERS','.github/workflows/codeql.yml','SECURITY.md'],0,
+ 'dependabot.yml defines the package ecosystems, directories and update schedule.');
+mc('scanning','Findings from several Azure DevOps and GitHub organizations must be viewed in one place alongside cloud security posture. Which service provides this?',
+ ['Microsoft Defender for Cloud DevOps security','Azure Boards','Microsoft Teams','Azure Artifacts'],0,
+ 'Defender for Cloud connects to DevOps platforms and shows code, secret and infrastructure as code findings with other posture data.');
+mc('scanning','A pull request check must fail when a change introduces a dependency with a disallowed licence. What can enforce this?',
+ ['The dependency review action configured with licence rules','A branch policy for minimum reviewers','A larger agent pool','A wiki page'],0,
+ 'Dependency review compares dependency changes and can fail on vulnerabilities or on licences that violate your policy.');
+multi('scanning','Which TWO approaches scan container images for vulnerabilities?',
+ ['Microsoft Defender for Containers scanning images in Azure Container Registry','A scanner such as Trivy run as a pipeline step','Pipeline caching','Branch policies'],[0,1],
+ 'Registry scanning and pipeline scanner steps both inspect image contents. Caching and branch policies do not.');
+
+/* ===== Domain 5: instrumentation ===== */
+
+mc('monitoring','Which Azure Monitor feature provides application performance monitoring, including request rates, failures and dependency calls?',
+ ['Application Insights','VM Insights','Container Insights','Network Insights'],0,
+ 'Application Insights instruments the application itself. The other insights monitor infrastructure.');
+match('monitoring','Match each Azure Monitor insight to what it monitors. All items are used once.',
+ ['VM Insights','Container Insights','Application Insights','Storage Insights'],
+ [['Performance and dependencies of virtual machines',0],['Performance of AKS clusters and containers',1],['Requests, exceptions and dependencies of your application code',2],['Capacity, availability and performance of storage accounts',3]],
+ 'Each insight is a curated experience over Azure Monitor data for one kind of resource.');
+mc('monitoring','An alert must fire when a log query finds more than 10 failed requests in 5 minutes. Which alert type is used?',
+ ['Log search alert rule','Activity log alert','Service health alert','Budget alert'],0,
+ 'Log search alert rules run a KQL query on a schedule and compare the result with a threshold.');
+mc('monitoring','A team wants an alert to notify a Teams channel and start an Azure Automation runbook. What do they configure?',
+ ['An action group','A dashboard','A branch policy','A feed view'],0,
+ 'Action groups define who is notified and which actions run when an alert fires.');
+mc('monitoring','Which Azure DevOps feature can notify external services when a pipeline run fails?',
+ ['Service hooks','The project wiki','Test plans','Artifacts feeds'],0,
+ 'Service hooks publish Azure DevOps events to other services.');
+mc('monitoring','Where in a GitHub repository can you see activity such as commits, contributors and traffic?',
+ ['The Insights tab','Settings, then Pages','Security, then Overview','Actions, then Runners'],0,
+ 'Repository Insights collects pulse, contributors, traffic, commits and dependency information.');
+
+mc('kql','What does this query return?',
+ ['The number of requests in the last hour for each result code, highest first','All requests ever recorded','The single slowest request','Failed dependency calls'],0,
+ 'It filters to the last hour, counts requests per result code and sorts the counts in descending order.',
+ 'requests\n| where timestamp > ago(1h)\n| summarize count() by resultCode\n| order by count_ desc');
+ddc('kql','Complete the query to chart the average request duration per hour over the last day.',
+ 'requests\n| {0} timestamp > ago(24h)\n| {1} avg(duration) by bin(timestamp, 1h)\n| render timechart',
+ [[['select','where','filter','limit'],1],[['group','aggregate','summarize','calc'],2]],
+ 'where filters rows, and summarize aggregates them. bin() groups timestamps into hourly buckets.');
+mc('kql','Which Application Insights feature visualises the components of a distributed application and the calls between them?',
+ ['Application Map','Availability tests','Live Metrics only','Usage funnels'],0,
+ 'Application Map shows components and dependencies, and it links to end-to-end transaction details for tracing.');
+mc('kql','Which KQL operator limits the columns that are returned?',
+ ['project','where','summarize','take'],0,
+ 'project selects columns, where filters rows, summarize aggregates and take returns a number of rows.');
+mc('kql','Which Application Insights field lets you correlate a request with the dependency calls and exceptions it caused?',
+ ['operation_Id','cloud_RoleName','sdkVersion','itemType'],0,
+ 'Telemetry for one operation shares an operation_Id, which is how distributed tracing ties it together.');
+mc('kql','A VM\'s CPU stays above 90 percent for 20 minutes. Which Azure Monitor data type is best for alerting quickly with low latency?',
+ ['Metrics','Activity log','Change analysis','Resource provider registrations'],0,
+ 'Metrics are lightweight numeric values collected at regular intervals, which suits near real-time alerting.');
+
+return {Q:Q,DOMAINS:DOMAINS,EXAM_MIX:EXAM_MIX,TOPICS:TOPICS};
+})(),({
+ id:'az400',code:'AZ-400',name:'DevOps Engineer Expert',
+ title:'AZ-400 Practice Lab',
+ eyebrow:'Exam AZ-400 · Designing and Implementing Microsoft DevOps Solutions',
+ outline:'the skills outline that applies from 27 July 2026',
+ tips:[
+  'Read the whole scenario and note constraints such as cost, effort, security and downtime.',
+  'Look for phrases like least administrative effort, most secure and minimize cost. They decide between two workable answers.',
+  'In YAML questions, check keywords and indentation, and whether a setting applies to Azure Repos, GitHub or both.',
+  'Answer everything. A blank cannot score, and there is no partial credit.',
+  'Flag a hard question and return to it from the question map.'
+ ],
+ links:[
+  ['Study guide for Exam AZ-400','https://learn.microsoft.com/en-gb/credentials/certifications/resources/study-guides/az-400','Guide'],
+  ['Exam AZ-400 page','https://learn.microsoft.com/en-us/credentials/certifications/exams/az-400/','Guide'],
+  ['Exam sandbox, to try every question type','https://go.microsoft.com/fwlink/?linkid=2226877','Sandbox'],
+  ['Development for Enterprise DevOps','https://learn.microsoft.com/en-us/training/paths/az-400-work-git-for-enterprise-devops/','Learn'],
+  ['Manage source control','https://learn.microsoft.com/en-us/training/paths/az-400-manage-source-control/','Learn'],
+  ['Implement CI with Azure Pipelines and GitHub Actions','https://learn.microsoft.com/en-us/training/paths/az-400-implement-ci-azure-pipelines-github-actions/','Learn'],
+  ['Design and Implement a Release Strategy','https://learn.microsoft.com/en-us/training/paths/az-400-design-implement-release-strategy/','Learn'],
+  ['Manage infrastructure as code using Azure and DSC','https://learn.microsoft.com/en-us/training/paths/az-400-manage-infrastructure-as-code-using-azure/','Learn'],
+  ['Implement security and validate code bases for compliance','https://learn.microsoft.com/en-us/training/paths/az-400-implement-security-validate-code-bases-compliance/','Learn'],
+  ['Implement Continuous Feedback','https://learn.microsoft.com/en-us/training/paths/az-400-implement-continuous-feedback/','Learn'],
+  ['Exam Readiness Zone: processes and communications','https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-az-400-design-and-implement-processes-and-communications','Video'],
+  ['Exam Readiness Zone: source control strategy','https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-az-400-design-and-implement-a-source-control-strategy','Video'],
+  ['Exam Readiness Zone: build and release pipelines','https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-az-400-design-and-implement-build-and-release-pipelines','Video'],
+  ['Exam Readiness Zone: security and compliance plan','https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-az-400-develop-a-security-and-compliance-plan','Video'],
+  ['Exam Readiness Zone: instrumentation strategy','https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-az-400-implement-an-instrumentation-strategy','Video']
+ ],
+ note:'The outline changed on 27 July 2026. Some Learn paths and the Exam Readiness videos may predate it, so check them against the study guide.'
+}));
+const L=['A','B','C','D','E','F'];
+const NUM=['','one','two','three','four','five'];
+const TYPE={mc:'Multiple choice',multi:'Multiple response',yn:'Yes or No statements',dd:'Complete the statement',match:'Drag and drop',order:'Build list'};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const pad=n=>String(n).padStart(2,'0');
+
+const app=document.getElementById('app');
+const S={exam:'gh900',screen:'home',mode:'exam',dom:new Set(),qs:[],i:0,ans:[],touched:{},flags:{},checked:{},sel:null,confirm:false,t0:0,timer:null,res:null,reviewId:null,msg:'',showJson:''};
+let X,Q,DOMAINS,EXAM_MIX,TOPICS;
+
+function setExam(id){
+  if(!EXAMS[id])id='gh900';
+  S.exam=id;X=EXAMS[id];Q=X.Q;DOMAINS=X.DOMAINS;EXAM_MIX=X.EXAM_MIX;TOPICS=X.TOPICS;
+  S.dom=new Set(DOMAINS.map((_,i)=>i+1));S.msg='';S.showJson='';
+  try{localStorage.setItem('lab-exam',id)}catch(e){}
+  try{if(location.hash.slice(1)!==id)history.replaceState(null,'','#'+id)}catch(e){}
+}
+(function(){
+  let id='';
+  try{id=(location.hash||'').slice(1)}catch(e){id=''}
+  if(!EXAMS[id]){try{id=localStorage.getItem('lab-exam')||''}catch(e){id=''}}
+  setExam(EXAMS[id]?id:'gh900');
+})();
+
+/* ---------- saved attempts ---------- */
+const LSKEY='lab-attempts';
+let DB=null,attempts=[],ready=false,storeKind='local',unsub=null;
+const mine=()=>attempts.filter(a=>(a.exam||'gh900')===S.exam);
+function idleRender(){if(S.screen!=='quiz')render()}
+function loadLocal(){
+  let a=[];
+  try{a=JSON.parse(localStorage.getItem(LSKEY)||'[]')}catch(e){a=[]}
+  if(!Array.isArray(a)||!a.length){
+    try{const o=JSON.parse(localStorage.getItem('gh900-attempts')||'[]');a=Array.isArray(o)?o:[]}catch(e){a=[]}
+  }
+  return a;
+}
+function fallbackLocal(){
+  if(unsub){try{unsub()}catch(e){}unsub=null}
+  DB=null;storeKind='local';attempts=loadLocal();ready=true;idleRender();
+}
+async function initStore(){
+  let db=null,uid=null;
+  try{
+    if(window.claude&&typeof window.claude.use==='function'){
+      db=await window.claude.use('db');
+      const u=await window.claude.use('user');
+      uid=u&&typeof u.id==='function'?await u.id():null;
+    }
+  }catch(e){db=null;uid=null}
+  if(!db||!uid){fallbackLocal();return}
+  storeKind='cloud';
+  try{
+    DB=db.doc('data/users/'+uid+'/progress').collection('attempts');
+    unsub=DB.orderBy('when','asc').limit(500).onSnapshot(
+      snap=>{attempts=snap.docs.map(d=>Object.assign({id:d.id},d.data()));ready=true;idleRender()},
+      ()=>{fallbackLocal()}
+    );
+  }catch(e){fallbackLocal()}
+}
+async function saveAttempt(rec){
+  if(DB){
+    try{await DB.doc(rec.id).set(rec);return 'cloud'}catch(e){return 'fail'}
+  }
+  try{
+    attempts.push(rec);attempts.sort((a,b)=>a.when-b.when);
+    localStorage.setItem(LSKEY,JSON.stringify(attempts));return 'local';
+  }catch(e){return 'fail'}
+}
+const pctOf=a=>Math.round(100*a.correct/a.total);
+function qStats(){
+  const st={};
+  mine().forEach(a=>{const r=a.results||{};Object.keys(r).forEach(k=>{const s=st[k]||(st[k]={seen:0,right:0,last:null});s.seen++;s.right+=r[k]?1:0;s.last=r[k]?1:0})});
+  return st;
+}
+function weakIds(){const st=qStats();return Q.filter(q=>st[q.id]&&st[q.id].last===0).map(q=>q.id)}
+function pickExam(){
+  const st=qStats(),out=[];
+  DOMAINS.forEach((_,k)=>{
+    const pool=Q.filter(q=>q.d===k+1).map(q=>{const s=st[q.id];let sc=Math.random();if(!s)sc+=2;else if(s.last===0)sc+=1.5;return {q:q,sc:sc}}).sort((a,b)=>b.sc-a.sc);
+    pool.slice(0,EXAM_MIX[k]).forEach(x=>out.push(x.q));
+  });
+  return out;
+}
+
+/* ---------- backup and import ---------- */
+function exportText(){return JSON.stringify({app:'cert-practice-lab',version:1,attempts:attempts},null,1)}
+function cleanAttempt(a){
+  if(!a||typeof a!=='object')return null;
+  if(typeof a.id!=='string'||!/^[A-Za-z0-9_-]{1,100}$/.test(a.id))return null;
+  if(typeof a.when!=='number'||typeof a.total!=='number'||typeof a.correct!=='number')return null;
+  if(!Array.isArray(a.byD)||!a.results||typeof a.results!=='object')return null;
+  for(const x of a.byD){if(!x||typeof x.c!=='number'||typeof x.t!=='number')return null}
+  const results={};Object.keys(a.results).forEach(k=>{results[String(k)]=a.results[k]?1:0});
+  return {id:a.id,when:a.when,mode:a.mode==='practice'?'practice':'exam',exam:typeof a.exam==='string'&&EXAMS[a.exam]?a.exam:'gh900',total:a.total,correct:a.correct,ms:typeof a.ms==='number'?a.ms:0,byD:a.byD.map(x=>({c:x.c,t:x.t})),results:results};
+}
+async function importData(text){
+  let obj;
+  try{obj=JSON.parse(text)}catch(e){return 'That file is not valid JSON.'}
+  const list=Array.isArray(obj)?obj:(obj&&obj.attempts);
+  if(!Array.isArray(list))return 'No attempts were found in that file.';
+  const have=new Set(attempts.map(a=>a.id));let added=0,bad=0;
+  for(const raw of list){
+    const a=cleanAttempt(raw);
+    if(!a){bad++;continue}
+    if(have.has(a.id))continue;
+    const r=await saveAttempt(a);
+    if(r==='fail')return 'Importing stopped after '+added+' attempts because saving failed.';
+    have.add(a.id);added++;
+  }
+  return 'Imported '+added+' new attempt'+(added===1?'':'s')+(bad?'; skipped '+bad+' that were not valid':'')+'.';
+}
+function downloadBackup(){
+  try{
+    const blob=new Blob([exportText()],{type:'application/json'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='cert-practice-lab-progress.json';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    S.msg='Backup downloaded.';
+  }catch(e){S.msg='Download was blocked. Use Copy as JSON instead.'}
+  render();
+}
+function copyBackup(){
+  const text=exportText();
+  const fail=()=>{S.msg='Copying was blocked. Select the text below and copy it.';S.showJson=text;render()};
+  try{
+    navigator.clipboard.writeText(text).then(()=>{S.msg='Copied. Paste it into a file ending in .json to keep it.';S.showJson='';render()},fail);
+  }catch(e){fail()}
+}
+function backupHtml(){
+  let h='<section class="block"><h2>Back up or move your progress</h2><p class="hint">'+(storeKind==='cloud'?'Your attempts are saved privately with this page. You can still copy them as JSON or import a backup.':'Your attempts live in this browser only. Download a backup to keep them safe or to move them to another device.')+'</p><div class="row">';
+  if(storeKind==='local')h+='<button type="button" class="btn" data-act="exportDl">Download backup</button>';
+  h+='<button type="button" class="btn" data-act="exportCopy">Copy as JSON</button><label class="btn" for="imp">Import backup</label><input type="file" id="imp" accept=".json,application/json" hidden></div>';
+  if(S.msg)h+='<p class="hint" style="margin-top:8px" role="status">'+esc(S.msg)+'</p>';
+  if(S.showJson)h+='<textarea class="jsonbox" readonly aria-label="Progress backup as JSON">'+esc(S.showJson)+'</textarea>';
+  return h+'</section>';
+}
+
+/* ---------- question engine ---------- */
+function prep(q){
+  const c=Object.assign({},q);
+  if(q.t==='mc'||q.t==='multi'){
+    const p=shuffle(q.opts.map((_,i)=>i));
+    c.opts=p.map(i=>q.opts[i]);
+    c.a=q.t==='mc'?p.indexOf(q.a):q.a.map(x=>p.indexOf(x)).sort((x,y)=>x-y);
+  }
+  if(q.t==='match'){c.disp=shuffle(q.items.map((_,i)=>i))}
+  return c;
+}
+function initAns(q){
+  switch(q.t){
+    case 'mc':return -1;
+    case 'multi':return [];
+    case 'yn':return q.rows.map(()=>null);
+    case 'dd':return q.sels.map(()=>-1);
+    case 'match':return q.slots.map(()=>-1);
+    case 'order':{let p=q.steps.map((_,i)=>i);do{p=shuffle(p)}while(p.every((v,i)=>v===i));return p}
+  }
+}
+function solution(q){
+  switch(q.t){
+    case 'mc':return q.a;
+    case 'multi':return q.a;
+    case 'yn':return q.rows.map(r=>r[1]);
+    case 'dd':return q.sels.map(s=>s[1]);
+    case 'match':return q.slots.map(s=>s[1]);
+    case 'order':return q.steps.map((_,i)=>i);
+  }
+}
+function isCorrect(q,a){
+  const s=solution(q);
+  if(q.t==='mc')return a===s;
+  return Array.isArray(a)&&a.length===s.length&&a.every((v,i)=>v===s[i]);
+}
+function lines(q,a){
+  switch(q.t){
+    case 'mc':return [a<0?'No answer':q.opts[a]];
+    case 'multi':return a.length?a.map(i=>q.opts[i]):['No answer'];
+    case 'yn':return q.rows.map((r,i)=>(a[i]===null?'?':a[i]?'Yes':'No')+'  '+r[0]);
+    case 'dd':return [(q.codeTpl||q.tpl).replace(/\{(\d)\}/g,(m,k)=>a[k]<0?'[ ? ]':'['+q.sels[k][0][a[k]]+']')];
+    case 'match':return q.slots.map((s,i)=>s[0]+'  ->  '+(a[i]<0?'?':q.items[a[i]]));
+    case 'order':return a.map((v,i)=>(i+1)+'. '+q.steps[v]);
+  }
+}
+function stemOf(q){return (q.t==='dd'&&!q.codeTpl)?q.tpl.replace(/\{\d\}/g,'____'):q.q}
+function qBlock(q){return '<p class="stem">'+esc(stemOf(q))+'</p>'+(q.code?'<pre class="code">'+esc(q.code)+'</pre>':'')}
+function linksHtml(key){
+  const t=TOPICS[key];if(!t)return '';
+  return '<span class="links">'+t.l.map(x=>'<span><a href="'+esc(x[1])+'" target="_blank" rel="noopener noreferrer">'+esc(x[0])+'</a><span class="k">'+x[2]+'</span></span>').join('')+'</span>';
+}
+function reviseLine(q){const t=TOPICS[q.topic];return t?'<p class="rev">Revise: '+esc(t.n)+'<br>'+linksHtml(q.topic)+'</p>':''}
+function feedback(q,a){
+  const ok=isCorrect(q,a);
+  let h='<div class="fb '+(ok?'ok':'no')+'"><div class="fb-h">'+(ok?'Correct':'Incorrect')+'</div>';
+  if(!ok)h+=lines(q,a).map(l=>'<div class="diff del">'+esc(l)+'</div>').join('');
+  h+=lines(q,solution(q)).map(l=>'<div class="diff add">'+esc(l)+'</div>').join('');
+  return h+'<p class="why">'+esc(q.why)+'</p>'+(ok?'':reviseLine(q))+'</div>';
+}
+function answerOnly(q){
+  const sol=Q.find(x=>x.id===q.id)||q;
+  let h='<div class="fb ok"><div class="fb-h">Correct answer</div>';
+  h+=lines(sol,solution(sol)).map(l=>'<div class="diff add">'+esc(l)+'</div>').join('');
+  return h+'<p class="why">'+esc(sol.why)+'</p>'+reviseLine(sol)+'</div>';
+}
+const isLocked=()=>S.screen==='quiz'&&S.mode==='practice'&&!!S.checked[S.i];
+const fmtT=ms=>{const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return (h?h+':'+pad(m):m)+':'+pad(r)};
+const fmtD=t=>new Date(t).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+function tick(){const el=document.getElementById('timer');if(el)el.textContent=fmtT(Date.now()-S.t0)}
+
+function startQuiz(mode,list){
+  S.mode=mode;S.qs=shuffle(list.map(prep));S.i=0;S.ans=S.qs.map(initAns);
+  S.touched={};S.flags={};S.checked={};S.sel=null;S.confirm=false;S.t0=Date.now();S.screen='quiz';
+  clearInterval(S.timer);S.timer=setInterval(tick,1000);
+  render();window.scrollTo(0,0);
+}
+
+/* ---------- screens ---------- */
+function topnav(cur){
+  let h='<div class="topnav"><label class="plan"><span>Learning plan</span><select id="plan" aria-label="Learning plan">';
+  Object.keys(EXAMS).forEach(k=>{h+='<option value="'+k+'"'+(k===S.exam?' selected':'')+'>'+esc(EXAMS[k].code+' '+EXAMS[k].name)+'</option>'});
+  h+='</select></label>';
+  h+='<button type="button" class="btn'+(cur==='home'?' pri':'')+'" data-act="home">Start a test</button>';
+  const n=mine().length;
+  h+='<button type="button" class="btn'+(cur==='progress'?' pri':'')+'" data-act="progress">Progress'+(n?' ('+n+')':'')+'</button></div>';
+  return h;
+}
+
+function home(){
+  const prac=S.mode==='practice';
+  const wk=weakIds();
+  const total=EXAM_MIX.reduce((a,b)=>a+b,0);
+  let h=topnav('home')+'<div class="eyebrow">'+esc(X.eyebrow)+'</div><h1>'+esc(X.title)+'</h1>';
+  h+='<p class="lede">'+Q.length+' questions written against '+esc(X.outline)+', using the formats Microsoft exams use: multiple choice, multiple response, Yes or No statements, dropdowns, drag and drop and build list. Each question is all or nothing, because Microsoft gives no partial credit. Every finished test is saved to your progress.</p>';
+  if(X.note)h+='<div class="notice">'+esc(X.note)+'</div>';
+  h+='<section class="block"><h2>Choose a mode</h2><div class="modes">';
+  h+='<button type="button" class="mode" data-act="mode" data-mode="exam" aria-pressed="'+(!prac)+'"><b>Exam simulation</b><span>'+total+' questions drawn from the whole bank in the proportions of the skills outline, favouring ones you have not seen or got wrong. No feedback until you finish.</span></button>';
+  h+='<button type="button" class="mode" data-act="mode" data-mode="practice" aria-pressed="'+prac+'"><b>Practice with feedback</b><span>Check each answer as you go and see the correct answer with an explanation. Pick the domains to work on.</span></button>';
+  h+='</div></section>';
+  h+='<section class="block"><h2>Skills measured</h2><div class="dtable">';
+  DOMAINS.forEach((d,k)=>{
+    const cnt=Q.filter(q=>q.d===k+1).length;
+    h+='<label class="drow'+(prac?'':' off')+'"><input type="checkbox" data-dom="'+(k+1)+'"'+(S.dom.has(k+1)||!prac?' checked':'')+(prac?'':' disabled')+'><span class="name">'+esc(d.n)+'</span><span class="meta">weight '+d.w+'</span><span class="meta">'+cnt+' questions</span></label>';
+  });
+  h+='</div>';
+  if(!prac)h+='<p class="hint" style="margin-top:8px">An exam simulation draws from every domain. Switch to practice to pick domains.</p>';
+  h+='</section>';
+  const list=prac?Q.filter(q=>S.dom.has(q.d)):null;
+  const n=prac?list.length:total;
+  h+='<div class="row block"><button type="button" class="btn pri" data-act="start"'+(n?'':' disabled')+'>Start '+(prac?'practice':'exam simulation')+' ('+n+' questions)</button>';
+  if(wk.length)h+='<button type="button" class="btn" data-act="practiceweak">Practice your '+wk.length+' weak questions</button>';
+  h+='</div>';
+  const ex=mine().filter(a=>a.mode==='exam');
+  if(ex.length){
+    const a=ex[ex.length-1];let weak=null;
+    (a.byD||[]).forEach((x,k)=>{if(x.t&&DOMAINS[k]&&(weak===null||x.c/x.t<a.byD[weak].c/a.byD[weak].t))weak=k});
+    h+='<section class="block"><div class="note"><b>Latest exam simulation:</b> '+pctOf(a)+'% on '+fmtD(a.when)+(weak!==null?'. Weakest domain: '+esc(DOMAINS[weak].n)+'.':'.')+'</div></section>';
+  }
+  h+='<section class="block"><h2>Reading the question</h2><ul class="tips">'+X.tips.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul></section>';
+  h+='<section class="block"><h2>Official resources</h2><ul class="reslist">'+X.links.map(x=>'<li><a href="'+esc(x[1])+'" target="_blank" rel="noopener noreferrer">'+esc(x[0])+'</a><span class="k">'+esc(x[2])+'</span></li>').join('')+'</ul></section>';
+  h+='<p class="foot">Unofficial practice material written for revision. It is not real exam content and is not affiliated with or endorsed by Microsoft or GitHub. Questions can contain mistakes, so check anything surprising against the official documentation.</p>';
+  return h;
+}
+
+function bodyOf(q,a,lock){
+  if(q.t==='mc'){
+    return q.opts.map((o,i)=>{let c=a===i?' sel':'';if(lock){if(i===q.a)c+=' right';else if(a===i)c+=' wrong'}
+      return '<label class="opt'+c+'"><input type="radio" name="o" value="'+i+'"'+(a===i?' checked':'')+(lock?' disabled':'')+'><span class="key">'+L[i]+'</span><span>'+esc(o)+'</span></label>'}).join('');
+  }
+  if(q.t==='multi'){
+    return q.opts.map((o,i)=>{const on=a.includes(i);let c=on?' sel':'';if(lock){if(q.a.includes(i))c+=' right';else if(on)c+=' wrong'}
+      return '<label class="opt'+c+'"><input type="checkbox" name="m" value="'+i+'"'+(on?' checked':'')+(lock?' disabled':'')+'><span class="key">'+L[i]+'</span><span>'+esc(o)+'</span></label>'}).join('');
+  }
+  if(q.t==='yn'){
+    let h='<div class="yn"><div class="yn-h"><span>Statement</span><span>Yes</span><span>No</span></div>';
+    q.rows.forEach((r,i)=>{
+      const c=lock?(a[i]===r[1]?' right':' wrong'):'';
+      h+='<div class="yn-r'+c+'"><span>'+esc(r[0])+'</span>'
+       +'<label><input type="radio" name="r'+i+'" data-row="'+i+'" value="1"'+(a[i]===true?' checked':'')+(lock?' disabled':'')+' aria-label="Yes"></label>'
+       +'<label><input type="radio" name="r'+i+'" data-row="'+i+'" value="0"'+(a[i]===false?' checked':'')+(lock?' disabled':'')+' aria-label="No"></label></div>';
+    });
+    return h+'</div>';
+  }
+  if(q.t==='dd'){
+    const parts=(q.codeTpl||q.tpl).split(/\{(\d)\}/);
+    let h=q.codeTpl?'<pre class="code">':'<p class="dd">';
+    parts.forEach((p,i)=>{
+      if(i%2===0){h+=esc(p)}
+      else{const k=+p;const c=lock?(a[k]===q.sels[k][1]?' right':' wrong'):'';
+        h+='<select data-sel="'+k+'" class="'+c.trim()+'" aria-label="Choice '+(k+1)+'"'+(lock?' disabled':'')+'><option value="-1">Select...</option>'
+         +q.sels[k][0].map((o,j)=>'<option value="'+j+'"'+(a[k]===j?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select>';}
+    });
+    return h+(q.codeTpl?'</pre>':'</p>');
+  }
+  if(q.t==='match'){
+    const used=new Set(a.filter(v=>v>-1));
+    const pool=q.disp.filter(i=>!used.has(i)).map(i=>'<span class="chip'+(S.sel===i?' on':'')+'" role="button" tabindex="0" draggable="true" data-act="chip" data-item="'+i+'">'+esc(q.items[i])+'</span>').join('');
+    let h='<p class="hint">Drag each item to its place, or tap an item and then tap a target.</p><div class="pool" data-act="pool">'+(pool||'<em>All items placed</em>')+'</div><div class="slots">';
+    q.slots.forEach((s,k)=>{
+      const v=a[k];const c=lock?(v===s[1]?' right':' wrong'):'';
+      h+='<div class="slot'+c+'"><span class="slot-l">'+esc(s[0])+'</span><span class="drop" role="button" tabindex="0" data-act="slot" data-slot="'+k+'">'
+       +(v>-1?'<span class="chip" draggable="true" data-item="'+v+'">'+esc(q.items[v])+'</span>':'<em>Drop here or tap</em>')+'</span></div>';
+    });
+    return h+'</div>';
+  }
+  if(q.t==='order'){
+    let h='<p class="hint">Use Up and Down to arrange the steps in the correct order.</p><ol class="ord">';
+    a.forEach((v,pos)=>{
+      const c=lock?(v===pos?' right':' wrong'):'';
+      h+='<li class="'+c.trim()+'"><span class="pos">'+(pos+1)+'</span><span class="otext">'+esc(q.steps[v])+'</span><span class="mv">'
+       +'<button type="button" data-act="up" data-pos="'+pos+'" aria-label="Move up"'+(lock||pos===0?' disabled':'')+'>Up</button>'
+       +'<button type="button" data-act="down" data-pos="'+pos+'" aria-label="Move down"'+(lock||pos===a.length-1?' disabled':'')+'>Down</button></span></li>';
+    });
+    return h+'</ol>';
+  }
+  return '';
+}
+
+function quiz(){
+  const q=S.qs[S.i],a=S.ans[S.i],lock=isLocked(),n=S.qs.length;
+  const done=Object.keys(S.touched).length;
+  const prac=S.mode==='practice';
+  let h='<div class="status"><span>Question '+(S.i+1)+' of '+n+'</span><span class="tag">'+esc(X.code)+'</span>';
+  if(prac)h+='<span class="tag">D'+q.d+' &middot; '+esc(DOMAINS[q.d-1].n)+'</span>';
+  h+='<span class="sp"></span><span>'+(prac?'Practice':'Exam simulation')+'</span><span id="timer">0:00</span></div>';
+  h+='<div class="progress" role="progressbar" aria-label="Questions answered" aria-valuemin="0" aria-valuemax="'+n+'" aria-valuenow="'+done+'"><i style="width:'+(100*done/n)+'%"></i></div>';
+  h+='<section class="card'+(lock?' locked':'')+'"><div class="qhead"><span>Q'+pad(q.id)+' &middot; '+TYPE[q.t]+'</span><button type="button" class="flag" data-act="flag" aria-pressed="'+(!!S.flags[S.i])+'">'+(S.flags[S.i]?'Flagged for review':'Flag for review')+'</button></div>';
+  h+='<p class="stem">'+esc(q.q)+'</p>';
+  if(q.code)h+='<pre class="code">'+esc(q.code)+'</pre>';
+  if(q.t==='multi')h+='<p class="instr">Choose '+NUM[q.k]+'.</p>';else h+='<p class="instr"></p>';
+  h+=bodyOf(q,a,lock);
+  if(lock)h+=feedback(q,a);
+  h+='</section>';
+  h+='<div class="nav"><button type="button" class="btn" data-act="prev"'+(S.i===0?' disabled':'')+'>Previous</button>';
+  if(prac&&!lock)h+='<button type="button" class="btn pri" data-act="check"'+(S.touched[S.i]?'':' disabled')+'>Check answer</button>';
+  h+='<span class="sp"></span>';
+  h+=S.i<n-1?'<button type="button" class="btn'+(lock||!prac?' pri':'')+'" data-act="next">Next</button>':'<button type="button" class="btn pri" data-act="finishAsk">Finish</button>';
+  h+='</div>';
+  if(S.confirm){
+    const un=n-done,fl=Object.keys(S.flags).filter(k=>S.flags[k]).length;
+    h+='<div class="confirm"><p><b>Finish now?</b> You have '+un+' unanswered'+(fl?' and '+fl+' flagged':'')+'. Unanswered questions score zero.</p><div class="row"><button type="button" class="btn pri" data-act="finishYes">See results</button><button type="button" class="btn" data-act="finishNo">Keep going</button></div></div>';
+  }
+  h+='<section><h2>Question map</h2><div class="map">';
+  S.qs.forEach((x,i)=>{
+    let c='cell';
+    if(S.touched[i])c+=' done';
+    if(prac&&S.checked[i])c+=isCorrect(x,S.ans[i])?' good':' bad';
+    if(i===S.i)c+=' cur';
+    if(S.flags[i])c+=' fl';
+    h+='<button type="button" class="'+c+'" data-act="goto" data-i="'+i+'" aria-label="Question '+(i+1)+(S.touched[i]?', answered':'')+(S.flags[i]?', flagged':'')+'">'+(i+1)+'</button>';
+  });
+  h+='</div><div class="legend"><span>Filled: answered</span><span>Dot: flagged</span></div>';
+  h+='<button type="button" class="btn" data-act="finishAsk">End and see results</button></section>';
+  return h;
+}
+
+function results(){
+  const r=S.res,pct=Math.round(100*r.correct/r.total);
+  let h='<div class="eyebrow">'+esc(X.code)+' &middot; '+(r.mode==='exam'?'Exam simulation':'Practice')+' results</div><h1>Results</h1>';
+  h+='<div class="score"><span class="big">'+r.correct+' / '+r.total+'</span><span class="sm">'+pct+'% correct</span><span class="sm">Time '+fmtT(r.ms)+'</span>'+(r.un?'<span class="sm">'+r.un+' unanswered</span>':'');
+  if(r.mode==='exam'){
+    const prev=mine().filter(a=>a.mode==='exam'&&a.id!==r.rec.id).slice(-1)[0];
+    if(prev){const d=pct-pctOf(prev);h+='<span class="sm">Previous exam simulation '+pctOf(prev)+'% <span class="'+(d>=0?'up':'down')+'">('+(d>=0?'+':'')+d+' pts)</span></span>'}
+  }
+  h+='</div>';
+  const sv=r.save;
+  h+='<p class="hint">'+(sv==='cloud'?'Saved to your progress history.':sv==='local'?'Saved in this browser only. Download a backup from the Progress tab to keep it safe.':sv==='fail'?'This attempt could not be saved to your progress history. If you can only view this page, ask its owner for Contributor access.':'Saving...')+'</p>';
+  h+='<section class="block"><h2>By skill area</h2><div class="dtable">';
+  DOMAINS.forEach((d,k)=>{
+    const x=r.byD[k];
+    if(!x.t){h+='<div class="rrow"><span>'+esc(d.n)+'<small>weight '+d.w+'</small></span><span class="bar"></span><span class="pct">n/a</span></div>';return}
+    const p=Math.round(100*x.c/x.t),low=p<80;
+    h+='<div class="rrow"><span>'+esc(d.n)+'<small>weight '+d.w+' &middot; '+x.c+' of '+x.t+'</small></span><span class="bar'+(low?' low':'')+'"><i style="width:'+p+'%"></i></span><span class="pct'+(low?' low':'')+'">'+p+'%</span></div>';
+  });
+  h+='</div><p class="hint" style="margin-top:8px">Red means under 80%. The real exam reports a scaled score where 700 is a pass, so a percentage here is only a guide. Aim for 80% or more in every area.</p></section>';
+  h+='<div class="row block">';
+  if(r.missed.length)h+='<button type="button" class="btn pri" data-act="retry">Practice the '+r.missed.length+' missed</button>';
+  h+='<button type="button" class="btn" data-act="progress">View progress</button><button type="button" class="btn" data-act="home">Back to start</button></div>';
+  if(r.missed.length){
+    h+='<section><h2>Missed questions</h2>';
+    r.missed.forEach(m=>{
+      h+='<div class="miss"><div class="qhead"><span>Q'+pad(m.q.id)+' &middot; '+TYPE[m.q.t]+' &middot; D'+m.q.d+'</span></div>'+qBlock(m.q)+feedback(m.q,m.a)+'</div>';
+    });
+    h+='</section>';
+  }else h+='<div class="note">No missed questions. Every answer was correct.</div>';
+  return h;
+}
+
+function chart(ex){
+  const W=640,H=232,Lm=40,Rm=16,Tm=26,Bm=30,n=ex.length;
+  const Xp=i=>n===1?(Lm+(W-Lm-Rm)/2):Lm+i*(W-Lm-Rm)/(n-1);
+  const Yp=p=>Tm+(1-p/100)*(H-Tm-Bm);
+  let s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Exam simulation score by attempt, as a percentage">';
+  [0,25,50,75,100].forEach(v=>{s+='<line class="gl" x1="'+Lm+'" x2="'+(W-Rm)+'" y1="'+Yp(v)+'" y2="'+Yp(v)+'"/><text class="tx" x="'+(Lm-6)+'" y="'+(Yp(v)+4)+'" text-anchor="end">'+v+'</text>'});
+  s+='<line class="tgt" x1="'+Lm+'" x2="'+(W-Rm)+'" y1="'+Yp(80)+'" y2="'+Yp(80)+'"/><text class="tg" x="'+(Lm+4)+'" y="'+(Yp(80)-5)+'">80% target</text>';
+  const pts=ex.map((a,i)=>[Xp(i),Yp(pctOf(a))]);
+  if(n>1)s+='<polyline class="ln" points="'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'"/>';
+  pts.forEach((p,i)=>{
+    s+='<circle class="pt" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="5"/>';
+    if(n<=12||i===n-1)s+='<text class="tx" x="'+p[0].toFixed(1)+'" y="'+(p[1]-10).toFixed(1)+'" text-anchor="middle">'+pctOf(ex[i])+'%</text>';
+    if(n<=14||i%2===0||i===n-1)s+='<text class="tx" x="'+p[0].toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle">'+(i+1)+'</text>';
+  });
+  return s+'</svg>';
+}
+
+function progress(){
+  let h=topnav('progress')+'<div class="eyebrow">'+esc(X.code)+' &middot; Saved attempts</div><h1>Progress</h1>';
+  if(!ready)return h+'<p class="lede">Loading your attempts...</p>';
+  const all=mine();
+  if(!all.length){
+    return h+'<p class="lede">No '+esc(X.code)+' attempts yet. Finish an exam simulation or a practice round and it will show up here.</p><div class="row block"><button type="button" class="btn pri" data-act="home">Start a test</button></div>'+backupHtml();
+  }
+  const ex=all.filter(a=>a.mode==='exam'),st=qStats();
+  h+='<div class="score">';
+  h+='<span class="sm">'+all.length+' attempts</span><span class="sm">'+ex.length+' exam simulations</span>';
+  if(ex.length){
+    const lp=pctOf(ex[ex.length-1]),best=Math.max.apply(null,ex.map(pctOf)),last3=ex.slice(-3),avg=Math.round(last3.reduce((s,a)=>s+pctOf(a),0)/last3.length);
+    h+='<span class="big">'+lp+'%</span><span class="sm">latest exam</span><span class="sm">best '+best+'%</span><span class="sm">average of last '+last3.length+': '+avg+'%</span>';
+  }
+  h+='</div>';
+  if(ex.length){h+='<section class="block"><h2>Exam simulation scores</h2>'+chart(ex)+'<p class="hint" style="margin-top:8px">Attempt number along the bottom. Dashed line marks 80%.</p></section>'}
+  h+='<section class="block"><h2>By skill area</h2><div class="dtable">';
+  DOMAINS.forEach((d,k)=>{
+    let seen=0,right=0;
+    Q.filter(q=>q.d===k+1).forEach(q=>{const s=st[q.id];if(s){seen+=s.seen;right+=s.right}});
+    const p=seen?Math.round(100*right/seen):null,low=p!==null&&p<80;
+    let sub='weight '+d.w;
+    const lastEx=ex.length&&ex[ex.length-1].byD?ex[ex.length-1].byD[k]:null,prevEx=ex.length>1&&ex[ex.length-2].byD?ex[ex.length-2].byD[k]:null;
+    if(lastEx&&lastEx.t){
+      const lp=Math.round(100*lastEx.c/lastEx.t);sub+=' &middot; latest exam '+lp+'%';
+      if(prevEx&&prevEx.t){const dl=lp-Math.round(100*prevEx.c/prevEx.t);sub+=' <span class="'+(dl>=0?'up':'down')+'">('+(dl>=0?'+':'')+dl+')</span>'}
+    }
+    h+='<div class="rrow"><span>'+esc(d.n)+'<small>'+sub+'</small></span><span class="bar'+(low?' low':'')+'"><i style="width:'+(p||0)+'%"></i></span><span class="pct'+(low?' low':'')+'">'+(p===null?'n/a':p+'%')+'</span></div>';
+  });
+  h+='</div><p class="hint" style="margin-top:8px">The bar shows accuracy across every answer you have given in this domain. Red means under 80%.</p></section>';
+  const tp=Object.keys(TOPICS).map(k=>{let seen=0,right=0,total=0;Q.forEach(q=>{if(q.topic!==k)return;total++;const s=st[q.id];if(s){seen+=s.seen;right+=s.right}});return {k:k,seen:seen,right:right,total:total,p:seen?Math.round(100*right/seen):null}});
+  const tested=tp.filter(x=>x.p!==null).sort((a,b)=>a.p-b.p||b.seen-a.seen),untested=tp.filter(x=>x.p===null);
+  h+='<section class="block"><h2>Where to revise</h2><p class="hint">Topics ranked by accuracy across all your answers, weakest first. Each links to the matching Microsoft Learn module or documentation page. Questions are matched to modules by title, so skim the module for the point you missed.</p><div class="dtable">';
+  tested.forEach(x=>{
+    const low=x.p<80;
+    h+='<div class="trow"><div class="thead"><span>'+esc(TOPICS[x.k].n)+'<small>'+x.right+' of '+x.seen+' answers correct &middot; '+x.total+' questions in bank</small></span><span class="bar'+(low?' low':'')+'"><i style="width:'+x.p+'%"></i></span><span class="pct'+(low?' low':'')+'">'+x.p+'%</span></div>'+linksHtml(x.k)+'</div>';
+  });
+  h+='</div>';
+  if(untested.length)h+='<p class="hint" style="margin-top:8px">Not tested yet: '+untested.map(x=>esc(TOPICS[x.k].n)).join(', ')+'.</p>';
+  h+='</section>';
+  const weak=Q.filter(q=>st[q.id]&&st[q.id].last===0).sort((a,b)=>(st[b.id].seen-st[b.id].right)-(st[a.id].seen-st[a.id].right)||a.id-b.id);
+  h+='<section class="block"><h2>Questions to revisit</h2>';
+  if(weak.length){
+    h+='<div class="row" style="margin-bottom:10px"><button type="button" class="btn pri" data-act="practiceweak">Practice these '+weak.length+' questions</button></div><div class="dtable">';
+    weak.slice(0,12).forEach(q=>{
+      const s=st[q.id],t=stemOf(q);
+      h+='<div class="arow"><span class="qs">'+esc(t.length>110?t.slice(0,110)+'...':t)+'</span><span class="qm">D'+q.d+' &middot; '+esc(TOPICS[q.topic].n)+' &middot; missed '+(s.seen-s.right)+' of '+s.seen+'</span></div>';
+    });
+    h+='</div>';
+    if(weak.length>12)h+='<p class="hint" style="margin-top:8px">Showing the 12 missed most often.</p>';
+  }else h+='<div class="note">Nothing outstanding. Your most recent answer to every question you have seen was correct.</div>';
+  h+='</section>';
+  h+='<section class="block"><h2>History</h2><div class="dtable">';
+  const desc=all.slice().reverse();
+  desc.slice(0,20).forEach(a=>{
+    const miss=Object.keys(a.results||{}).filter(k=>!a.results[k]).length;
+    let delta='';
+    if(a.mode==='exam'){
+      const i=ex.indexOf(a);
+      if(i>0){const d=pctOf(a)-pctOf(ex[i-1]);delta='<span class="dl '+(d>=0?'up':'down')+'">'+(d>=0?'+':'')+d+' pts</span>'}
+    }
+    h+='<div class="arow"><span class="when">'+fmtD(a.when)+'<br>'+(a.mode==='exam'?'Exam simulation':'Practice')+'</span><span class="sc">'+a.correct+'/'+a.total+' ('+pctOf(a)+'%)</span><span class="dl">'+fmtT(a.ms||0)+'</span>'+delta+'<span class="sp"></span>'+(miss?'<button type="button" class="btn sm" data-act="review" data-id="'+esc(a.id)+'">Review '+miss+' missed</button>':'')+'</div>';
+  });
+  h+='</div>'+(desc.length>20?'<p class="hint" style="margin-top:8px">Showing the latest 20 attempts.</p>':'');
+  h+='<p class="hint" style="margin-top:8px">'+(storeKind==='cloud'?'Attempts are saved privately to you with this page, so they follow you across devices.':'Shared storage is not available in this view, so attempts are saved in this browser only.')+'</p></section>';
+  return h+backupHtml();
+}
+
+function reviewScreen(){
+  const a=attempts.find(x=>x.id===S.reviewId);
+  let h='<div class="row" style="margin-bottom:18px"><button type="button" class="btn" data-act="progress">Back to progress</button></div>';
+  if(!a)return h+'<p class="lede">That attempt could not be found.</p>';
+  const missed=Q.filter(q=>a.results&&a.results[q.id]===0);
+  h+='<div class="eyebrow">'+esc(X.code)+' &middot; '+fmtD(a.when)+' &middot; '+(a.mode==='exam'?'Exam simulation':'Practice')+'</div><h1>'+a.correct+' / '+a.total+' ('+pctOf(a)+'%)</h1>';
+  h+='<p class="lede">The correct answers for the '+missed.length+' questions missed in this attempt.</p>';
+  missed.forEach(q=>{
+    h+='<div class="miss"><div class="qhead"><span>Q'+pad(q.id)+' &middot; '+TYPE[q.t]+' &middot; D'+q.d+'</span></div>'+qBlock(q)+answerOnly(q)+'</div>';
+  });
+  return h;
+}
+
+function render(){
+  const y=window.scrollY;
+  app.innerHTML=S.screen==='home'?home():S.screen==='quiz'?quiz():S.screen==='results'?results():S.screen==='progress'?progress():reviewScreen();
+  if(S.screen==='quiz')tick();
+  window.scrollTo(0,y);
+}
+
+function finish(){
+  clearInterval(S.timer);
+  const byD=DOMAINS.map(()=>({c:0,t:0})),missed=[],results={};let correct=0,un=0;
+  S.qs.forEach((q,i)=>{
+    const ok=isCorrect(q,S.ans[i]);byD[q.d-1].t++;results[q.id]=ok?1:0;
+    if(ok){byD[q.d-1].c++;correct++}else{missed.push({q:q,a:S.ans[i]});if(!S.touched[i])un++}
+  });
+  const when=Date.now();
+  const rec={id:'a'+when.toString(36)+Math.random().toString(36).slice(2,5),when:when,mode:S.mode,exam:S.exam,total:S.qs.length,correct:correct,ms:when-S.t0,byD:byD,results:results};
+  S.res={correct:correct,total:S.qs.length,byD:byD,missed:missed,un:un,ms:rec.ms,mode:S.mode,rec:rec,save:null};
+  S.screen='results';render();window.scrollTo(0,0);
+  saveAttempt(rec).then(r=>{S.res.save=r;if(S.screen==='results'&&S.res.rec===rec)render()});
+}
+function go(i){S.i=i;S.sel=null;S.confirm=false;render();window.scrollTo(0,0)}
+function place(item,slot){
+  const a=S.ans[S.i],old=a.indexOf(item);
+  if(old>-1)a[old]=-1;
+  a[slot]=item;S.touched[S.i]=1;S.sel=null;render();
+}
+
+/* ---------- events ---------- */
+app.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const act=el.dataset.act;
+  if(act==='mode'){S.mode=el.dataset.mode;render();return}
+  if(act==='start'){startQuiz(S.mode,S.mode==='practice'?Q.filter(q=>S.dom.has(q.d)):pickExam());return}
+  if(act==='practiceweak'){const w=weakIds();if(w.length)startQuiz('practice',Q.filter(q=>w.includes(q.id)));return}
+  if(act==='retry'){startQuiz('practice',S.res.missed.map(m=>m.q));return}
+  if(act==='home'){clearInterval(S.timer);S.screen='home';render();window.scrollTo(0,0);return}
+  if(act==='progress'){clearInterval(S.timer);S.screen='progress';render();window.scrollTo(0,0);return}
+  if(act==='review'){
+    S.reviewId=el.dataset.id;
+    const a=attempts.find(x=>x.id===S.reviewId);
+    if(a&&(a.exam||'gh900')!==S.exam)setExam(a.exam||'gh900');
+    S.screen='review';render();window.scrollTo(0,0);return;
+  }
+  if(act==='exportDl'){downloadBackup();return}
+  if(act==='exportCopy'){copyBackup();return}
+  if(S.screen!=='quiz')return;
+  const q=S.qs[S.i];
+  if(act==='prev'){go(S.i-1);return}
+  if(act==='next'){go(S.i+1);return}
+  if(act==='goto'){go(+el.dataset.i);return}
+  if(act==='flag'){S.flags[S.i]=!S.flags[S.i];render();return}
+  if(act==='check'){S.checked[S.i]=true;S.sel=null;render();return}
+  if(act==='finishAsk'){S.confirm=true;render();return}
+  if(act==='finishNo'){S.confirm=false;render();return}
+  if(act==='finishYes'){finish();return}
+  if(isLocked())return;
+  const a=S.ans[S.i];
+  if(act==='up'||act==='down'){
+    const p=+el.dataset.pos,t=act==='up'?p-1:p+1;
+    if(t<0||t>=a.length)return;
+    [a[p],a[t]]=[a[t],a[p]];S.touched[S.i]=1;render();return;
+  }
+  if(act==='chip'){const i=+el.dataset.item;S.sel=S.sel===i?null:i;render();return}
+  if(act==='slot'){
+    const k=+el.dataset.slot;
+    if(S.sel!==null){place(S.sel,k)}
+    else if(a[k]>-1){a[k]=-1;S.touched[S.i]=1;render()}
+    return;
+  }
+  if(act==='pool'&&S.sel!==null){S.sel=null;render()}
+});
+app.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.getAttribute&&e.target.getAttribute('role')==='button'&&e.target.dataset.act){e.preventDefault();e.target.click()}
+});
+app.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='plan'){setExam(t.value);render();return}
+  if(t.id==='imp'){
+    const f=t.files&&t.files[0];if(!f)return;
+    if(f.size>2000000){S.msg='That file is too large to be a progress backup.';render();return}
+    const rd=new FileReader();
+    rd.onload=()=>{importData(String(rd.result)).then(m=>{S.msg=m;S.showJson='';render()})};
+    rd.onerror=()=>{S.msg='That file could not be read.';render()};
+    rd.readAsText(f);return;
+  }
+  if(t.dataset.dom){const d=+t.dataset.dom;if(t.checked)S.dom.add(d);else S.dom.delete(d);render();return}
+  if(S.screen!=='quiz'||isLocked())return;
+  const q=S.qs[S.i],a=S.ans[S.i];
+  if(t.name==='o'){S.ans[S.i]=+t.value}
+  else if(t.name==='m'){
+    const idx=[].slice.call(app.querySelectorAll('input[name=m]:checked')).map(x=>+x.value);
+    if(idx.length>q.k){t.checked=false;return}
+    S.ans[S.i]=idx.sort((x,y)=>x-y);
+  }
+  else if(t.dataset.row!==undefined){a[+t.dataset.row]=t.value==='1'}
+  else if(t.dataset.sel!==undefined){a[+t.dataset.sel]=+t.value}
+  else return;
+  S.touched[S.i]=1;render();
+});
+app.addEventListener('dragstart',e=>{
+  const c=e.target.closest&&e.target.closest('.chip');
+  if(!c||isLocked())return;
+  e.dataTransfer.setData('text/plain',c.dataset.item);e.dataTransfer.effectAllowed='move';
+});
+app.addEventListener('dragover',e=>{
+  if(e.target.closest&&e.target.closest('.drop,.pool')&&!isLocked())e.preventDefault();
+});
+app.addEventListener('drop',e=>{
+  if(S.screen!=='quiz'||isLocked())return;
+  const raw=e.dataTransfer.getData('text/plain');if(raw==='')return;
+  const item=+raw,drop=e.target.closest('.drop'),pool=e.target.closest('.pool');
+  if(drop){e.preventDefault();place(item,+drop.dataset.slot)}
+  else if(pool){e.preventDefault();const a=S.ans[S.i],old=a.indexOf(item);if(old>-1){a[old]=-1;S.touched[S.i]=1;render()}}
+});
+
+render();
+initStore();
+
+</script>
+</body>
+</html>
