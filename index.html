@@ -210,6 +210,14 @@ select.wrong{border-color:var(--bad);background:var(--bad-bg)}
 .btn[for]{display:inline-block}
 .foot a{color:var(--accent);text-underline-offset:2px}
 
+.cstats{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 18px;font-size:14px;color:var(--muted)}
+.cstats b{font:600 22px var(--font-display);color:var(--fg);margin-right:4px}
+.cprog{font:500 12px var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.cardbox{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:20px 18px;min-height:150px}
+.cfront{font:600 22px/1.35 var(--font-display);margin:12px 0 0}
+.cback{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.cback p{margin:0 0 8px}
+
 </style>
 </head>
 <body>
@@ -758,7 +766,74 @@ return {Q:Q,DOMAINS:DOMAINS,EXAM_MIX:EXAM_MIX,TOPICS:TOPICS};
   ['GitHub Foundations learning path, part 1','https://learn.microsoft.com/en-us/training/paths/github-foundations/','Learn'],
   ['GitHub Foundations learning path, part 2','https://learn.microsoft.com/en-us/training/paths/github-foundations-2/','Learn']
  ]
-}));
+}),{cards:[
+['git','git init','Creates a new repository in the current folder.'],
+['git','git clone','Copies a remote repository, with its full history, to your machine.'],
+['git','git add','Stages changes so they go into the next commit.'],
+['git','git commit','Records the staged snapshot in your local history, with a message. Nothing is uploaded.'],
+['git','git push','Sends your local commits to the remote repository.'],
+['git','git fetch vs git pull','Fetch downloads remote commits without changing your current branch. Pull is fetch followed by a merge into the current branch.'],
+['git','Create a branch and switch to it','git checkout -b name, or the newer git switch -c name.'],
+['git','git branch -d name','Deletes a branch. It does not create or switch.'],
+['git','git status vs git diff','Status lists modified and staged files. Diff shows the line-by-line changes.'],
+['git','git merge','Combines another branch\'s history into the branch you are on.'],
+['git','git stash','Temporarily shelves uncommitted changes so you can switch context.'],
+['git','git log','Lists the commit history.'],
+['ghintro','Git vs GitHub','Git is the distributed version control tool. GitHub is a platform that hosts Git repositories and adds pull requests, issues, Actions and more.'],
+['ghintro','GitHub flow','Branch from main, add commits, open a pull request, review, merge, deploy. Main is always deployable and branches are short-lived.'],
+['ghintro','Git flow vs GitHub flow','GitHub flow uses just main plus short-lived branches. Git flow adds long-lived develop, release and hotfix branches.'],
+['products','Enterprise Cloud vs Enterprise Server','Cloud is hosted by GitHub. Server is self-hosted and run by your own organization.'],
+['products','Personal account vs organization','People sign in with personal accounts. Organizations are shared owners of repositories, with teams, roles and policies.'],
+['products','Enterprise account','Groups several organizations so policies, billing and membership are managed centrally.'],
+['markdown','@name vs #123','@ mentions a person or team. # followed by a number links an issue or pull request in the same repository.'],
+['markdown','Task list syntax','- [ ] for unchecked and - [x] for checked.'],
+['markdown','Fenced code block','Triple backticks, with the language name after the opening fence for syntax highlighting.'],
+['repos','README','Introduces the project on the repository home page.'],
+['repos','LICENSE','States the terms under which others may use the code.'],
+['repos','CONTRIBUTING.md','Explains how people should contribute.'],
+['repos','SECURITY.md','The security policy: how to report a vulnerability privately.'],
+['repos','CODEOWNERS','Maps paths to people or teams who are automatically requested for review.'],
+['repos','CODE_OF_CONDUCT.md','Sets expectations for behaviour in the community.'],
+['repos','Repository visibility','Public: everyone. Private: only people given access. Internal: members of the enterprise (enterprise only).'],
+['repos','Archiving a repository','Makes it read-only but keeps it visible. It can be unarchived.'],
+['repos','Star vs fork vs watch','Star bookmarks and shows appreciation. Fork makes your own copy. Watch controls notifications.'],
+['history','Blame vs History','Blame shows who last changed each line. History lists the commits that changed the file.'],
+['prs','Draft pull request','Opened for early feedback. It cannot be merged until it is marked ready for review.'],
+['prs','Squash and merge','Combines all the pull request\'s commits into a single commit on the base branch.'],
+['prs','Rebase and merge','Replays each commit onto the base branch without creating a merge commit.'],
+['prs','Create a merge commit','Keeps every commit and adds one merge commit.'],
+['prs','Review options','Comment gives feedback only. Approve says it is good to merge. Request changes says updates are expected first.'],
+['prs','Closing keywords','Closes #12, Fixes #12 or Resolves #12 in a pull request closes the issue when it merges into the default branch.'],
+['issues','Issue templates and forms','Give people a structured form to fill in when they open an issue.'],
+['notifications','Watch settings','Participating and @mentions (default), All activity, Custom, or Ignore.'],
+['sharing','Discussions','Open-ended community conversation and Q&A that is not tied to specific code.'],
+['sharing','Wikis','Documentation pages that live alongside a repository.'],
+['sharing','GitHub Pages','Publishes a static website straight from a repository.'],
+['sharing','Gists','Small snippets or notes stored as versioned mini repositories. Secret gists are unlisted, not private.'],
+['actions','Workflow, job, step, runner','A workflow contains jobs. A job contains steps and runs on one runner. A step is a command or an action. A runner is the machine.'],
+['actions','Where workflows live','YAML files in .github/workflows.'],
+['actions','Common workflow triggers','push, pull_request, schedule (cron, UTC), workflow_dispatch (manual) and release.'],
+['copilot','Copilot Chat','A conversational interface to ask questions about and get explanations of code.'],
+['copilot','Using Copilot responsibly','Always review suggestions. They can be wrong, insecure or out of date.'],
+['codespaces','github.dev vs a codespace','github.dev is a lightweight web editor with no terminal or compute. A codespace is a full cloud development environment you can run code in.'],
+['codespaces','devcontainer.json','Defines the tools, extensions and settings of a codespace.'],
+['projects','Projects layouts','Table: spreadsheet rows. Board: cards in columns. Roadmap: items on a timeline.'],
+['projects','Milestones vs labels','Milestones group work toward a target with a due date and progress. Labels categorize and filter.'],
+['projects','Project workflows','Built-in automation, such as setting status to Done when an issue is closed.'],
+['secrepo','Branch protection','Rules or rulesets that require pull requests, reviews and checks, and block force pushes to a branch.'],
+['secrepo','Secret scanning vs push protection','Secret scanning detects secrets. Push protection blocks a push that contains one.'],
+['secrepo','Dependabot alerts vs security updates','Alerts tell you about vulnerable dependencies. Security updates open pull requests to fix them. Version updates keep packages current.'],
+['auth','Passwords for Git over HTTPS','Not accepted. Use a personal access token or a credential manager.'],
+['auth','Two-factor authentication','An extra sign-in step on top of a password, for example an authenticator app, security key or passkey.'],
+['admin','Organization roles','Owner: full admin. Member: standard access. Billing manager: billing only. Outside collaborator: access to specific repositories only.'],
+['admin','Repository roles, least to most access','Read, Triage, Write, Maintain, Admin.'],
+['admin','Teams','Groups of members that can be nested, mentioned and granted repository access together.'],
+['oss','Contributing without write access','Fork the repository, make your change on a branch, then open a pull request back to the original.'],
+['oss','Keeping a fork current','Sync the fork with the upstream repository.'],
+['innersource','InnerSource','Using open source practices, such as visible code and cross-team contributions, inside an organization.'],
+['community','GitHub Sponsors','Lets people financially support open source maintainers.'],
+['community','GitHub Marketplace','Where you find and install Actions and apps.']
+].map((c,i)=>({id:'gh900-'+(i+1),topic:c[0],f:c[1],b:c[2]}))});
 EXAMS.az400=Object.assign((function(){
 /* Shared helper that builds a question bank. Each question names a topic, and the topic fixes its domain. */
 function makeBank(TOPICS){
@@ -1291,7 +1366,58 @@ return {Q:Q,DOMAINS:DOMAINS,EXAM_MIX:EXAM_MIX,TOPICS:TOPICS};
   ['Exam Readiness Zone: instrumentation strategy','https://learn.microsoft.com/en-us/shows/exam-readiness-zone/preparing-for-az-400-implement-an-instrumentation-strategy','Video']
  ],
  note:'The outline changed on 27 July 2026. Some Learn paths and the Exam Readiness videos may predate it, so check them against the study guide.'
-}));
+}),{cards:[
+['flow','GitHub to Azure Boards link','Connect with the Azure Boards app, then mention work items with AB#123 in commits and pull requests.'],
+['metrics','Lead time vs cycle time','Lead time runs from request to delivery. Cycle time runs from when work starts to delivery.'],
+['metrics','The four DORA metrics','Deployment frequency, lead time for changes, change failure rate, time to restore service.'],
+['metrics','Cumulative flow diagram','Stacks work items by state over time. A widening band shows a bottleneck.'],
+['docs','Diagrams in wikis and READMEs','Mermaid: text-based diagrams rendered in GitHub and Azure DevOps wikis.'],
+['integrations','Webhooks and service hooks','Send an HTTP POST with event data to a URL or service when events happen.'],
+['branching','Trunk-based development','Small, frequent merges into one main branch, with feature flags hiding unfinished work.'],
+['branching','Release branches','Cut a branch to stabilise and patch a specific supported version while main moves on.'],
+['branchpol','Azure Repos pull request builds','pr: triggers are not supported for Azure Repos Git. Use a build validation branch policy.'],
+['branchpol','Squash merge','Combines the pull request\'s commits into one commit on the target branch.'],
+['repomgmt','Git LFS','Stores large binary files outside normal history and keeps small pointers in the repo.'],
+['repomgmt','Removing a pushed secret from history','Rotate the secret, then rewrite history with git filter-repo or BFG and force push. Revert or delete leaves it in history.'],
+['repomgmt','git reflog','Shows where HEAD has pointed, which helps recover commits lost to a reset.'],
+['packages','Semantic versioning','MAJOR.MINOR.PATCH. A compatible bug fix bumps PATCH, a compatible feature bumps MINOR, a breaking change bumps MAJOR.'],
+['packages','Azure Artifacts feed views','@Local, @Prerelease and @Release views promote versions without republishing.'],
+['testing','Approvals vs gates','Approvals involve a person. Gates are automated checks such as REST calls or Azure Monitor alerts. Both can apply to a stage.'],
+['testing','Publishing test and coverage results','PublishTestResults for tests, PublishCodeCoverageResults for coverage.'],
+['pipelines','Stages vs jobs by default','Stages run in sequence. Jobs in a stage run in parallel unless dependsOn is set.'],
+['pipelines','Schedules','Cron is in UTC. always: false skips the run if nothing changed since the last scheduled run.'],
+['pipelines','Expression syntax','$(var) macro, replaced just before a task runs. ${{ }} template, evaluated at compile time. $[ ] runtime, used in conditions and variable assignments.'],
+['pipelines','Manual approval in YAML','ManualValidation task in an agentless job, or an environment approval check.'],
+['pipelines','Triggering one pipeline from another','A pipeline resource with a trigger.'],
+['agents','Self-hosted vs Microsoft-hosted agents','Self-hosted agents reach private networks and use licensed software. Microsoft-hosted agents are fresh VMs per job.'],
+['agents','Scaling self-hosted agents','Virtual machine scale set agent pools (or Managed DevOps Pools) scale out and in with demand.'],
+['agents','GitHub runner groups and ephemeral runners','Runner groups control which repositories use runners. Ephemeral runners take one job and are removed.'],
+['actions','Azure login without a secret','OIDC: permissions: id-token: write and a federated credential on an Entra app, used via azure/login.'],
+['actions','GITHUB_TOKEN','Created per run, limited by the permissions key, and expires when the job ends.'],
+['actions','Ordering and reuse in Actions','needs orders jobs. workflow_call makes a reusable workflow. concurrency with cancel-in-progress cancels older runs.'],
+['actions','Environment secrets','Released to a job only after the environment\'s protection rules, such as required reviewers, pass.'],
+['reuse','extends templates','The template controls the pipeline structure, so authors cannot skip enforced steps.'],
+['reuse','Variable groups','Shared values across pipelines, and can be linked to Azure Key Vault for secrets.'],
+['reuse','Environment checks','Approvals, branch control, business hours, exclusive lock and Azure Monitor alerts, applied to every deployment to that environment.'],
+['deploystrat','Blue-green, canary, ring-based','Blue-green swaps traffic between two environments. Canary sends a small share of traffic first. Ring-based widens by audience groups.'],
+['deploystrat','App Service deployment slots','Deploy to staging, warm up, swap. Swap back to roll back.'],
+['deploystrat','Feature flags','Azure App Configuration feature management: toggle features at run time without redeploying.'],
+['containers','Multi-stage Docker builds','Build in one stage and copy only the output into a small runtime image.'],
+['iac','Bicep what-if','Previews the creates, changes and deletes before a deployment.'],
+['iac','ARM Complete vs Incremental mode','Complete deletes resources not in the template. Incremental leaves them alone.'],
+['iac','Azure Deployment Environments','Lets platform teams publish environment definitions that developers deploy on demand.'],
+['maintain','Speeding up pipelines','Cache dependencies with the Cache task. Review pipeline analytics for slow or flaky steps.'],
+['identity','Service connections without secrets','Workload identity federation avoids stored secrets. Managed identities avoid credentials on Azure resources.'],
+['identity','Azure DevOps permission conflicts','An explicit Deny wins over Allow.'],
+['identity','Managed identity types','System-assigned: tied to the resource lifecycle. User-assigned: standalone and reusable.'],
+['secrets','Secrets in pipelines','Secure files for certificates, Key Vault task or linked variable group for secrets. Secret variables are masked but not auto-mapped into script environment variables.'],
+['scanning','GitHub Advanced Security features','Code scanning (CodeQL), secret scanning with push protection, dependency review, Dependabot.'],
+['scanning','Defender for Cloud DevOps security','Shows code, secret and infrastructure-as-code findings across DevOps platforms with cloud posture.'],
+['monitoring','Application Insights vs other insights','Application Insights monitors the app itself. VM, Container and Storage insights monitor infrastructure.'],
+['monitoring','Alerts','Metric alerts are fast and numeric. Log search alerts run KQL on a schedule. Action groups define who is notified and what runs.'],
+['kql','KQL operators','where filters rows, project picks columns, summarize aggregates, take returns some rows.'],
+['kql','operation_Id','Correlates a request with its dependencies and exceptions in Application Insights.']
+].map((c,i)=>({id:'az400-'+(i+1),topic:c[0],f:c[1],b:c[2]}))});
 const L=['A','B','C','D','E','F'];
 const NUM=['','one','two','three','four','five'];
 const TYPE={mc:'Multiple choice',multi:'Multiple response',yn:'Yes or No statements',dd:'Complete the statement',match:'Drag and drop',order:'Build list'};
@@ -1321,6 +1447,26 @@ function setExam(id){
 const LSKEY='lab-attempts';
 let DB=null,attempts=[],ready=false,storeKind='local',unsub=null;
 const mine=()=>attempts.filter(a=>(a.exam||'gh900')===S.exam);
+
+/* ---------- flashcard progress (kept in this browser) ---------- */
+const CKEY=e=>'lab-cards-'+e;
+const memCards={};
+function readCS(e){
+  try{const o=JSON.parse(localStorage.getItem(CKEY(e))||'null');if(o&&typeof o==='object')return o}catch(x){}
+  return memCards[e]||{};
+}
+function writeCS(e,o){memCards[e]=o;try{localStorage.setItem(CKEY(e),JSON.stringify(o))}catch(x){}}
+function cleanCS(o){
+  const out={};
+  if(!o||typeof o!=='object')return out;
+  Object.keys(o).forEach(k=>{
+    const v=o[k];
+    if(/^[a-z0-9]+-\d{1,4}$/.test(k)&&v&&typeof v.b==='number'&&typeof v.s==='number')out[k]={b:Math.max(0,Math.min(3,Math.round(v.b))),s:Math.max(0,Math.round(v.s))};
+  });
+  return out;
+}
+const cardsOf=()=>X.cards||[];
+const BOX_DONE=3;
 function idleRender(){if(S.screen!=='quiz')render()}
 function loadLocal(){
   let a=[];
@@ -1379,7 +1525,11 @@ function pickExam(){
 }
 
 /* ---------- backup and import ---------- */
-function exportText(){return JSON.stringify({app:'cert-practice-lab',version:1,attempts:attempts},null,1)}
+function exportText(){
+  const cards={};
+  Object.keys(EXAMS).forEach(e=>{const c=readCS(e);if(Object.keys(c).length)cards[e]=c});
+  return JSON.stringify({app:'cert-practice-lab',version:1,attempts:attempts,cards:cards},null,1);
+}
 function cleanAttempt(a){
   if(!a||typeof a!=='object')return null;
   if(typeof a.id!=='string'||!/^[A-Za-z0-9_-]{1,100}$/.test(a.id))return null;
@@ -1392,8 +1542,17 @@ function cleanAttempt(a){
 async function importData(text){
   let obj;
   try{obj=JSON.parse(text)}catch(e){return 'That file is not valid JSON.'}
-  const list=Array.isArray(obj)?obj:(obj&&obj.attempts);
-  if(!Array.isArray(list))return 'No attempts were found in that file.';
+  const list=Array.isArray(obj)?obj:(obj&&Array.isArray(obj.attempts)?obj.attempts:[]);
+  let cardsAdded=0;
+  if(obj&&!Array.isArray(obj)&&obj.cards&&typeof obj.cards==='object'){
+    Object.keys(obj.cards).forEach(e=>{
+      if(!EXAMS[e])return;
+      const inc=cleanCS(obj.cards[e]),cur=readCS(e);let ch=false;
+      Object.keys(inc).forEach(k=>{if(!cur[k]||inc[k].s>cur[k].s){cur[k]=inc[k];ch=true;cardsAdded++}});
+      if(ch)writeCS(e,cur);
+    });
+  }
+  if(!list.length&&!cardsAdded)return 'No attempts or flashcard progress were found in that file.';
   const have=new Set(attempts.map(a=>a.id));let added=0,bad=0;
   for(const raw of list){
     const a=cleanAttempt(raw);
@@ -1403,7 +1562,7 @@ async function importData(text){
     if(r==='fail')return 'Importing stopped after '+added+' attempts because saving failed.';
     have.add(a.id);added++;
   }
-  return 'Imported '+added+' new attempt'+(added===1?'':'s')+(bad?'; skipped '+bad+' that were not valid':'')+'.';
+  return 'Imported '+added+' new attempt'+(added===1?'':'s')+(cardsAdded?' and progress on '+cardsAdded+' flashcard'+(cardsAdded===1?'':'s'):'')+(bad?'; skipped '+bad+' that were not valid':'')+'.';
 }
 function downloadBackup(){
   try{
@@ -1516,6 +1675,7 @@ function topnav(cur){
   h+='</select></label>';
   h+='<button type="button" class="btn'+(cur==='home'?' pri':'')+'" data-act="home">Start a test</button>';
   const n=mine().length;
+  if(cardsOf().length)h+='<button type="button" class="btn'+(cur==='cards'?' pri':'')+'" data-act="cards">Flashcards</button>';
   h+='<button type="button" class="btn'+(cur==='progress'?' pri':'')+'" data-act="progress">Progress'+(n?' ('+n+')':'')+'</button></div>';
   return h;
 }
@@ -1781,7 +1941,7 @@ function reviewScreen(){
 
 function render(){
   const y=window.scrollY;
-  app.innerHTML=S.screen==='home'?home():S.screen==='quiz'?quiz():S.screen==='results'?results():S.screen==='progress'?progress():reviewScreen();
+  app.innerHTML=S.screen==='home'?home():S.screen==='quiz'?quiz():S.screen==='results'?results():S.screen==='progress'?progress():S.screen==='cards'?cardsScreen():reviewScreen();
   if(S.screen==='quiz')tick();
   window.scrollTo(0,y);
 }
@@ -1806,6 +1966,64 @@ function place(item,slot){
   a[slot]=item;S.touched[S.i]=1;S.sel=null;render();
 }
 
+/* ---------- flashcards ---------- */
+function cardStats(list){
+  const cs=readCS(S.exam);let known=0,learning=0,fresh=0;
+  list.forEach(c=>{const v=cs[c.id];if(!v)fresh++;else if(v.b>=BOX_DONE)known++;else learning++});
+  return {known:known,learning:learning,fresh:fresh,left:learning+fresh};
+}
+function startCards(deck){
+  const cs=readCS(S.exam);
+  let pool=cardsOf().filter(c=>deck==='all'||c.topic===deck);
+  let due=pool.filter(c=>!cs[c.id]||cs[c.id].b<BOX_DONE);
+  const review=!due.length;
+  if(review)due=pool;
+  due=shuffle(due).sort((a,b)=>((cs[a.id]||{b:-1}).b)-((cs[b.id]||{b:-1}).b));
+  const queue=due.slice(0,20).map(c=>c.id);
+  S.cd={deck:deck,queue:queue,i:0,shown:false,got:0,again:0,redo:{},review:review,done:false};
+  render();window.scrollTo(0,0);
+}
+function cardAnswer(ok){
+  const cd=S.cd,id=cd.queue[cd.i],cs=readCS(S.exam),v=cs[id]||{b:0,s:0};
+  v.s++;v.b=ok?Math.min(BOX_DONE,v.b+1):0;cs[id]=v;writeCS(S.exam,cs);
+  if(ok)cd.got++;else{cd.again++;cd.redo[id]=(cd.redo[id]||0)+1;if(cd.redo[id]<=2)cd.queue.push(id)}
+  cd.i++;cd.shown=false;
+  if(cd.i>=cd.queue.length)cd.done=true;
+  render();window.scrollTo(0,0);
+}
+function cardsScreen(){
+  const list=cardsOf();
+  let h=topnav('cards')+'<div class="eyebrow">'+esc(X.code)+' &middot; Flashcards</div><h1>Flashcards</h1>';
+  const cd=S.cd;
+  if(!cd||(!cd.queue.length&&!cd.done)){
+    const st=cardStats(list);
+    h+='<p class="lede">'+list.length+' short cards for the look-alike terms and facts that exam questions lean on. Say the answer before you flip. Cards you miss come back more often. Your card progress is stored in this browser and is included in the backup on the Progress screen.</p>';
+    h+='<div class="cstats"><span><b>'+st.known+'</b> known</span><span><b>'+st.learning+'</b> learning</span><span><b>'+st.fresh+'</b> new</span></div>';
+    const topics={};list.forEach(c=>{topics[c.topic]=(topics[c.topic]||0)+1});
+    h+='<section class="block"><h2>Choose a deck</h2><label class="plan"><span>Topic</span><select id="cdeck" aria-label="Flashcard topic"><option value="all"'+(S.cdeck==='all'||!S.cdeck?' selected':'')+'>All topics ('+list.length+')</option>';
+    Object.keys(topics).forEach(k=>{h+='<option value="'+k+'"'+(S.cdeck===k?' selected':'')+'>'+esc(TOPICS[k]?TOPICS[k].n:k)+' ('+topics[k]+')</option>'});
+    h+='</select></label></section>';
+    h+='<div class="row block"><button type="button" class="btn pri" data-act="cstart">Start a round of up to 20</button><button type="button" class="btn" data-act="creset">Reset card progress</button></div>';
+    if(S.msg)h+='<p class="hint">'+esc(S.msg)+'</p>';
+    return h;
+  }
+  if(cd.done){
+    const st=cardStats(cardsOf().filter(c=>cd.deck==='all'||c.topic===cd.deck));
+    h+='<section class="block"><h2>Round finished</h2><p class="lede">You said <b>Got it</b> '+cd.got+' time'+(cd.got===1?'':'s')+' and <b>Again</b> '+cd.again+' time'+(cd.again===1?'':'s')+'. In this deck: '+st.known+' known, '+st.learning+' learning, '+st.fresh+' new.</p></section>';
+    h+='<div class="row block"><button type="button" class="btn pri" data-act="cstart">Another round</button><button type="button" class="btn" data-act="cmenu">Back to decks</button></div>';
+    return h;
+  }
+  const c=cardsOf().find(x=>x.id===cd.queue[cd.i]);
+  h+='<div class="cprog">Card '+(cd.i+1)+' of '+cd.queue.length+(cd.review?' &middot; review round':'')+'</div>';
+  h+='<div class="cardbox"><span class="tag">'+esc(TOPICS[c.topic]?TOPICS[c.topic].n:c.topic)+'</span><p class="cfront">'+esc(c.f)+'</p>';
+  if(cd.shown)h+='<div class="cback"><p>'+esc(c.b)+'</p>'+reviseLine(c)+'</div>';
+  h+='</div><div class="row block">';
+  if(!cd.shown)h+='<button type="button" class="btn pri" data-act="cshow">Show answer</button>';
+  else h+='<button type="button" class="btn" data-act="cagain">Again</button><button type="button" class="btn pri" data-act="cgot">Got it</button>';
+  h+='<button type="button" class="btn" data-act="cmenu">Stop</button></div>';
+  return h;
+}
+
 /* ---------- events ---------- */
 app.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
@@ -1822,6 +2040,13 @@ app.addEventListener('click',e=>{
     if(a&&(a.exam||'gh900')!==S.exam)setExam(a.exam||'gh900');
     S.screen='review';render();window.scrollTo(0,0);return;
   }
+  if(act==='cards'){clearInterval(S.timer);S.screen='cards';S.cd=null;S.msg='';render();window.scrollTo(0,0);return}
+  if(act==='cmenu'){S.cd=null;S.msg='';render();window.scrollTo(0,0);return}
+  if(act==='cstart'){const d=S.cd&&S.cd.deck?S.cd.deck:(S.cdeck||'all');startCards(d);return}
+  if(act==='cshow'){S.cd.shown=true;render();return}
+  if(act==='cgot'){cardAnswer(true);return}
+  if(act==='cagain'){cardAnswer(false);return}
+  if(act==='creset'){writeCS(S.exam,{});S.msg='Card progress for this exam was reset.';render();return}
   if(act==='exportDl'){downloadBackup();return}
   if(act==='exportCopy'){copyBackup();return}
   if(S.screen!=='quiz')return;
@@ -1855,7 +2080,8 @@ app.addEventListener('keydown',e=>{
 });
 app.addEventListener('change',e=>{
   const t=e.target;
-  if(t.id==='plan'){setExam(t.value);render();return}
+  if(t.id==='plan'){setExam(t.value);S.cd=null;S.cdeck='all';render();return}
+  if(t.id==='cdeck'){S.cdeck=t.value;render();return}
   if(t.id==='imp'){
     const f=t.files&&t.files[0];if(!f)return;
     if(f.size>2000000){S.msg='That file is too large to be a progress backup.';render();return}
