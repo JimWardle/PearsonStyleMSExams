@@ -208,6 +208,7 @@ select.wrong{border-color:var(--bad);background:var(--bad-bg)}
 .foot{color:var(--muted);font-size:13px;margin-top:8px}
 .jsonbox{width:100%;min-height:120px;margin-top:10px;font:12px/1.5 var(--font-mono);background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px}
 .btn[for]{display:inline-block}
+.foot a{color:var(--accent);text-underline-offset:2px}
 
 </style>
 </head>
@@ -1552,6 +1553,7 @@ function home(){
   h+='<section class="block"><h2>Reading the question</h2><ul class="tips">'+X.tips.map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul></section>';
   h+='<section class="block"><h2>Official resources</h2><ul class="reslist">'+X.links.map(x=>'<li><a href="'+esc(x[1])+'" target="_blank" rel="noopener noreferrer">'+esc(x[0])+'</a><span class="k">'+esc(x[2])+'</span></li>').join('')+'</ul></section>';
   h+='<p class="foot">Unofficial practice material written for revision. It is not real exam content and is not affiliated with or endorsed by Microsoft or GitHub. Questions can contain mistakes, so check anything surprising against the official documentation.</p>';
+  h+='<p class="foot">Made by <a href="https://jameswardle.me/" target="_blank" rel="noopener noreferrer">James</a>. If it helped, you can <a href="https://buymeacoffee.com/jameswardle" target="_blank" rel="noopener noreferrer">buy me a coffee</a>.</p>';
   return h;
 }
 
