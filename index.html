@@ -218,6 +218,13 @@ select.wrong{border-color:var(--bad);background:var(--bad-bg)}
 .cback{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
 .cback p{margin:0 0 8px}
 
+.labbox h2{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:16px}
+.labbox h2 a{color:var(--accent);text-underline-offset:2px}
+.labbox h2 small{font:500 12px var(--font-mono);color:var(--muted);white-space:nowrap}
+.labtasks{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.labtasks label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.labtasks input{margin-top:4px}
+
 </style>
 </head>
 <body>
@@ -833,7 +840,653 @@ return {Q:Q,DOMAINS:DOMAINS,EXAM_MIX:EXAM_MIX,TOPICS:TOPICS};
 ['innersource','InnerSource','Using open source practices, such as visible code and cross-team contributions, inside an organization.'],
 ['community','GitHub Sponsors','Lets people financially support open source maintainers.'],
 ['community','GitHub Marketplace','Where you find and install Actions and apps.']
-].map((c,i)=>({id:'gh900-'+(i+1),topic:c[0],f:c[1],b:c[2]}))});
+].map((c,i)=>({id:'gh900-'+(i+1),topic:c[0],f:c[1],b:c[2]})),labs:[
+['Git and the GitHub flow','https://skills.github.com/',['Create a repository with a README','Clone it and create a branch with git switch -c','Commit, push and open a pull request','Try Squash and merge and look at the history','Compare File history and Blame on a file']],
+['Repository files and features','',['Add a LICENSE, CONTRIBUTING.md, SECURITY.md and CODEOWNERS file','Star, watch and fork a public repository','Sync your fork with the original','Archive a throwaway repository, then unarchive it']],
+['Collaboration','',['Create an issue template','Open a draft pull request, then mark it ready','Leave a Request changes review','Close an issue with a keyword in a pull request','Create a gist, a wiki page and a Discussion','Publish a GitHub Pages site']],
+['Actions, Copilot and Codespaces','',['Write a workflow that runs on pull_request','Add a manual trigger with workflow_dispatch','Open a codespace and look at devcontainer.json','Press . on a repository to open github.dev','Ask Copilot Chat to explain some code']],
+['Projects','',['Create a project and switch between Table, Board and Roadmap','Add a milestone and labels to some issues','Turn on a built-in project workflow']],
+['Security and administration','',['Add a branch protection rule or ruleset','Turn on Dependabot alerts and look at security updates','Look at secret scanning and push protection settings','Create an organization with a team and change a repository role','Turn on two-factor authentication']]
+].map((l,i)=>({id:'gh900-L'+(i+1),t:l[0],u:l[1],tasks:l[2].map((t,j)=>({id:'gh900-L'+(i+1)+'-'+(j+1),t:t}))}))});
+EXAMS.az104=Object.assign((function(){
+/* Shared helper that builds a question bank. Each question names a topic, and the topic fixes its domain. */
+function makeBank(TOPICS){
+  const Q=[];let n=0;
+  const YNQ='For each of the following statements, select Yes if the statement is true. Otherwise, select No.';
+  const add=(topic,o)=>{
+    if(!TOPICS[topic])throw new Error('Unknown topic '+topic);
+    o.topic=topic;o.d=TOPICS[topic].d;o.id=++n;Q.push(o);
+  };
+  return {
+    Q:Q,
+    mc:(topic,q,opts,a,why,code)=>add(topic,{t:'mc',q:q,opts:opts,a:a,why:why,code:code}),
+    multi:(topic,q,opts,a,why,code)=>add(topic,{t:'multi',q:q,opts:opts,a:a,why:why,code:code,k:a.length}),
+    yn:(topic,ctx,rows,why,code)=>add(topic,{t:'yn',q:ctx+' '+YNQ,rows:rows,why:why,code:code}),
+    dd:(topic,tpl,sels,why)=>add(topic,{t:'dd',q:'Complete the statement by selecting the correct option in each list.',tpl:tpl,sels:sels,why:why}),
+    ddc:(topic,instr,codeTpl,sels,why)=>add(topic,{t:'dd',q:instr,tpl:'',codeTpl:codeTpl,sels:sels,why:why}),
+    match:(topic,q,items,slots,why)=>add(topic,{t:'match',q:q,items:items,slots:slots,why:why}),
+    order:(topic,q,steps,why)=>add(topic,{t:'order',q:q,steps:steps,why:why})
+  };
+}
+
+const LEARN='https://learn.microsoft.com/en-us/training/modules/';
+const MON='https://learn.microsoft.com/en-us/azure/azure-monitor/';
+const GUIDE='https://learn.microsoft.com/en-gb/credentials/certifications/resources/study-guides/az-104';
+
+const DOMAINS=[
+ {n:'Manage Azure identities and governance',w:'20-25%'},
+ {n:'Implement and manage storage',w:'15-20%'},
+ {n:'Deploy and manage Azure compute resources',w:'20-25%'},
+ {n:'Implement and manage virtual networking',w:'15-20%'},
+ {n:'Monitor and maintain Azure resources',w:'10-15%'}
+];
+const EXAM_MIX=[12,9,12,10,7];
+
+const TOPICS={
+ entra:{d:1,n:'Microsoft Entra users, groups, licences and SSPR',l:[['Understand Microsoft Entra ID',LEARN+'understand-azure-active-directory/','Learn'],['Create, configure, and manage identities',LEARN+'create-configure-manage-identities/','Learn'],['Allow users to reset their password with SSPR',LEARN+'allow-users-reset-their-password/','Learn']]},
+ rbac:{d:1,n:'Azure roles, scopes and access assignments',l:[['Secure your Azure resources with Azure RBAC',LEARN+'secure-azure-resources-with-rbac/','Learn']]},
+ governance:{d:1,n:'Policy, locks, tags, resource groups and management groups',l:[['Describe the core architectural components of Azure',LEARN+'describe-core-architectural-components-of-azure/','Learn'],['Azure Policy initiatives',LEARN+'sovereignty-policy-initiatives/','Learn'],['AZ-104 study guide',GUIDE,'Guide']]},
+ cost:{d:1,n:'Cost management, budgets and Advisor',l:[['AZ-104 study guide',GUIDE,'Guide'],['Describe the core architectural components of Azure',LEARN+'describe-core-architectural-components-of-azure/','Learn']]},
+ storageacct:{d:2,n:'Storage accounts, redundancy and encryption',l:[['Configure storage accounts',LEARN+'configure-storage-accounts/','Learn']]},
+ storagesec:{d:2,n:'Storage access: firewalls, SAS, keys and identity',l:[['Configure Azure Storage security',LEARN+'configure-storage-security/','Learn']]},
+ blobfiles:{d:2,n:'Blob Storage and Azure Files features',l:[['Configure Azure Blob Storage',LEARN+'configure-blob-storage/','Learn'],['Configure Azure Files and Azure File Sync',LEARN+'configure-azure-files-file-sync/','Learn']]},
+ arm:{d:3,n:'ARM templates and Bicep',l:[['Create Azure resources by using ARM templates',LEARN+'create-azure-resources-using-azure-resource-manager-templates/','Learn'],['Implement Bicep',LEARN+'implement-bicep/','Learn']]},
+ vms:{d:3,n:'Virtual machines, disks, availability and scale sets',l:[['Introduction to Azure virtual machines',LEARN+'intro-to-azure-virtual-machines/','Learn'],['Configure virtual machine availability',LEARN+'configure-virtual-machine-availability/','Learn']]},
+ containers:{d:3,n:'Container Registry, Container Instances and Container Apps',l:[['Configure Azure Container Instances',LEARN+'configure-azure-container-instances/','Learn'],['AZ-104 study guide',GUIDE,'Guide']]},
+ appservice:{d:3,n:'App Service plans, slots, TLS and networking',l:[['Configure Azure App Service plans',LEARN+'configure-app-service-plans/','Learn'],['Configure Azure App Service',LEARN+'configure-azure-app-services/','Learn']]},
+ vnet:{d:4,n:'Virtual networks, peering, routes and public IPs',l:[['Configure virtual networks',LEARN+'configure-virtual-networks/','Learn'],['Configure Azure Virtual Network peering',LEARN+'configure-vnet-peering/','Learn'],['Manage and control traffic flow with routes',LEARN+'control-network-traffic-flow-with-routes/','Learn']]},
+ netsec:{d:4,n:'NSGs, Bastion, service endpoints and private endpoints',l:[['Configure network security groups',LEARN+'configure-network-security-groups/','Learn'],['Introduction to Azure Network Watcher',LEARN+'intro-to-azure-network-watcher/','Learn']]},
+ dnslb:{d:4,n:'Azure DNS and load balancing',l:[['Host your domain on Azure DNS',LEARN+'host-domain-azure-dns/','Learn'],['Introduction to Azure Load Balancer',LEARN+'intro-to-azure-load-balancer/','Learn'],['Introduction to Azure Application Gateway',LEARN+'intro-to-azure-application-gateway/','Learn']]},
+ monitor:{d:5,n:'Azure Monitor: metrics, logs, alerts and Network Watcher',l:[['Monitor your Azure VMs with Azure Monitor',LEARN+'monitor-azure-vm-using-diagnostic-data/','Learn'],['Introduction to Azure Network Watcher',LEARN+'intro-to-azure-network-watcher/','Learn'],['Azure Monitor documentation',MON,'Docs']]},
+ backup:{d:5,n:'Azure Backup and Site Recovery',l:[['Introduction to Azure Backup',LEARN+'intro-to-azure-backup/','Learn'],['Protect your VMs by using Azure Backup',LEARN+'protect-virtual-machines-with-azure-backup/','Learn']]}
+};
+
+const B=makeBank(TOPICS);
+const Q=B.Q,mc=B.mc,multi=B.multi,yn=B.yn,dd=B.dd,ddc=B.ddc,match=B.match,order=B.order;
+
+/* ===== Domain 1: identities and governance ===== */
+
+mc('entra','You need to create user accounts for 200 new starters in Microsoft Entra ID with the least effort. What should you use?',
+ ['The bulk create users option with a CSV template','Create each user individually in the portal','Create a security group and add the starters','Create a custom Azure role for each starter'],0,
+ 'Bulk create accepts a CSV file of users. Groups and roles do not create user accounts.');
+mc('entra','Users in the Sales department must automatically become members of a group when their department attribute is Sales and leave it if that changes. What should you configure?',
+ ['A security group with dynamic user membership and a rule','A security group with assigned membership','A Microsoft 365 group with a manual owner','An administrative unit'],0,
+ 'Dynamic membership rules evaluate user attributes and add or remove members automatically. Dynamic groups need Microsoft Entra ID P1 or P2.');
+mc('entra','You try to assign a licence to a new user in Microsoft Entra ID and the assignment fails. What must be set on the user first?',
+ ['The usage location','The manager','The job title','A phone number for SSPR'],0,
+ 'Some services are not available in every country, so a usage location is required before a licence can be assigned.');
+mc('entra','You want licences to follow group membership so that new members receive the licence automatically. What should you use?',
+ ['Group-based licensing','Per-user licence assignment','Azure Policy','Management groups'],0,
+ 'Group-based licensing assigns licences to a group, and members inherit them. It requires an Entra ID P1 licence or higher.');
+mc('entra','A partner organization needs access to one of your applications, and they will sign in with their own organization account. What should you do?',
+ ['Invite them as external (guest) users with Microsoft Entra B2B collaboration','Create a new member account for each partner user and share the passwords','Add them to a management group','Give them the Owner role on the subscription'],0,
+ 'B2B collaboration invites external users as guests who authenticate with their own identity provider.');
+yn('entra','Statements about self-service password reset (SSPR).',
+ [['SSPR can be enabled for all users or for a selected group.',true],['Users must register authentication methods before they can reset their own password.',true],['SSPR can only be used by global administrators.',false],['SSPR requires every user to be assigned an Azure RBAC role.',false]],
+ 'SSPR can be scoped to a group. Users must register methods, and no Azure role is needed.');
+mc('entra','Which type of group can be used to grant access to Azure resources and can have dynamic membership?',
+ ['Security group','Distribution list only','Resource group','Management group'],0,
+ 'Security groups are used for access management. A resource group and a management group are Azure resource containers, not identity groups.');
+yn('entra','Statements about Microsoft Entra users and groups.',
+ [['A guest user is an external identity invited into your tenant.',true],['Group membership can be assigned manually or by a dynamic rule.',true],['Microsoft Entra ID roles and Azure RBAC roles are the same thing.',false],['An Azure subscription trusts exactly one Microsoft Entra tenant.',true]],
+ 'Entra roles manage directory objects, and Azure RBAC roles manage Azure resources. A subscription trusts one tenant.');
+mc('entra','Which role should you assign to someone who needs to manage users and reset passwords in the directory but not manage Azure subscriptions?',
+ ['User Administrator','Owner','Contributor','Virtual Machine Contributor'],0,
+ 'User Administrator is a Microsoft Entra role. Owner and Contributor are Azure roles for resources.');
+mc('entra','Which Microsoft Entra ID feature lets users reset a forgotten password without contacting the help desk?',
+ ['Self-service password reset','Conditional Access','Privileged Identity Management','Azure Policy'],0,
+ 'SSPR lets users verify their identity and set a new password themselves.');
+
+match('rbac','Match each built-in Azure role to what it allows. All items are used once.',
+ ['Owner','Contributor','Reader','User Access Administrator'],
+ [['Full access to resources, including assigning roles to others',0],['Create and manage all resources but cannot assign roles',1],['View resources but make no changes',2],['Manage who has access to resources and nothing else',3]],
+ 'Contributor cannot grant access. Owner and User Access Administrator can.');
+mc('rbac','A role assignment consists of which three elements?',
+ ['A security principal, a role definition and a scope','A user, a subscription and a tag','A group, a policy and a lock','A tenant, a region and a resource group'],0,
+ 'Azure RBAC assigns a role definition to a security principal at a scope.');
+mc('rbac','A user has the Reader role on a subscription and the Contributor role on resource group RG1. What can the user do in RG1?',
+ ['Create and manage resources, because permissions are additive','Only view resources, because Reader is more restrictive','Nothing, because the roles conflict','Assign roles to other users'],0,
+ 'RBAC permissions combine. Without a deny assignment, the user gets the union of all assignments that apply.');
+mc('rbac','At which scope should you assign a role so a user can manage every resource group in a subscription, with the least privilege that meets the need?',
+ ['The subscription','A single resource','The management group at the root','Each resource group individually'],0,
+ 'Assignments inherit down the hierarchy. The subscription covers all its resource groups without reaching beyond it.');
+order('rbac','Arrange the Azure scopes from broadest to narrowest.',
+ ['Management group','Subscription','Resource group','Resource'],
+ 'Role assignments and policies inherit from broader scopes to narrower ones.');
+mc('rbac','A Global Administrator needs to manage Azure resources in all subscriptions in the tenant. Which setting lets them gain that access?',
+ ['Access management for Azure resources, which grants User Access Administrator at the root scope','Assign the Global Administrator role in Azure Policy','Create a new subscription','Add the user to a resource group'],0,
+ 'Global Administrators can elevate access to become User Access Administrator at root scope. They should remove it afterwards.');
+mc('rbac','You want to create a role that allows virtual machines to be restarted but nothing else. What should you create?',
+ ['A custom role with the specific actions in its definition','A new management group','An Azure Policy initiative','A resource lock'],0,
+ 'Custom roles list allowed Actions, NotActions and AssignableScopes in a JSON definition.');
+mc('rbac','Which feature in the Azure portal helps you see what access a specific user has to a resource?',
+ ['Check access on the Access control (IAM) page','Resource locks','Tags','Cost analysis'],0,
+ 'Check access shows the effective role assignments for a user, group or service principal at that scope.');
+mc('rbac','What is the best practice for granting access to a team of administrators?',
+ ['Assign the role to a Microsoft Entra group and add the administrators to the group','Assign the role to each person individually','Share a single administrator account','Assign Owner at the root of the tenant'],0,
+ 'Assigning to groups is easier to manage and audit as people join and leave.');
+
+mc('governance','You must prevent anyone from creating resources outside West Europe and North Europe in a subscription. What should you use?',
+ ['Azure Policy with the allowed locations definition and a Deny effect','A resource lock','A custom RBAC role','Azure Advisor'],0,
+ 'The allowed locations policy denies deployments to other regions. RBAC controls who can act, not where.');
+match('governance','Match each Azure Policy effect to its behaviour. Some items are not used.',
+ ['Deny','Audit','Modify','DeployIfNotExists','Disabled'],
+ [['Blocks a non-compliant resource from being created or updated',0],['Allows the resource and records it as non-compliant',1],['Adds or changes properties such as tags during create or update',2],['Deploys a related resource if it is missing',3]],
+ 'Disabled turns the policy off and was not described.');
+yn('governance','Statements about Azure Policy.',
+ [['An initiative is a group of policy definitions assigned together.',true],['A policy assignment can be scoped to a management group, subscription or resource group.',true],['A Deny policy automatically deletes resources that already exist and are non-compliant.',false],['Azure Policy controls which users can perform actions.',false]],
+ 'Deny affects new and updated resources, and existing ones show as non-compliant. Who can act is controlled by RBAC.');
+match('governance','Match each resource lock to its effect. All items are used once.',
+ ['CanNotDelete','ReadOnly'],
+ [['Authorized users can read and modify the resource but cannot delete it',0],['Authorized users can read the resource but cannot modify or delete it',1]],
+ 'ReadOnly is stricter and can block actions that appear to be reads but write data.');
+yn('governance','Statements about resource locks.',
+ [['A lock applied to a resource group is inherited by the resources in it.',true],['A lock applies even to users with the Owner role.',true],['Only users with the Owner or User Access Administrator role can create or delete locks.',true],['A lock stops resources from being billed.',false]],
+ 'Locks guard against accidental change or deletion for everyone, including owners, until the lock is removed.');
+mc('governance','You tag a resource group with CostCenter=1234. What happens to the resources in the group?',
+ ['They do not inherit the tag unless you use Azure Policy to apply it','They automatically inherit the tag','The resources are blocked until they have the tag','The tag is copied to the subscription'],0,
+ 'Tags are not inherited by default. A Modify policy can copy tags from the resource group.');
+mc('governance','You must apply the same policies and role assignments to ten subscriptions. What should you use?',
+ ['A management group containing the subscriptions','Ten separate resource groups','A tag on each subscription','Azure Advisor'],0,
+ 'Management groups sit above subscriptions and let you apply governance once.');
+yn('governance','Statements about resource groups.',
+ [['Resources in one resource group can be located in different regions.',true],['Deleting a resource group deletes all the resources in it.',true],['A resource can belong to more than one resource group at the same time.',false],['You can move many resource types from one resource group to another.',true]],
+ 'A resource belongs to exactly one resource group at a time. It can often be moved to another one.');
+mc('governance','Which action changes the Microsoft Entra tenant that a subscription trusts?',
+ ['Change the directory of the subscription','Move the subscription to a resource group','Assign the Owner role','Add a tag'],0,
+ 'Each subscription trusts one tenant. Changing directory moves that trust, and role assignments do not carry across.');
+mc('governance','Which policy effect should you use to add a required tag with a default value when a resource is created without it?',
+ ['Modify','Audit','Deny','Disabled'],0,
+ 'Modify can add or update tags on create or update. Audit only reports and Deny blocks.',
+ '{\n  "if": { "field": "tags[Department]", "exists": "false" },\n  "then": { "effect": "modify" }\n}');
+
+mc('cost','You want to be notified when spending in a subscription reaches 80 percent of a monthly limit. What should you create?',
+ ['A budget with an alert threshold','A resource lock','An Azure Policy deny rule','A management group'],0,
+ 'Budgets track spend against a limit and send alerts at thresholds you set.');
+yn('cost','Statements about budgets and cost alerts.',
+ [['A budget alert notifies you but does not stop resources from running by default.',true],['A budget can trigger an action group to run automation.',true],['Exceeding a budget automatically deletes resources.',false],['Cost analysis can group costs by tag.',true]],
+ 'Budgets alert, they do not enforce. Automation can be added through action groups.');
+mc('cost','Which Azure tool gives personalised recommendations to reduce cost, improve reliability and security?',
+ ['Azure Advisor','Azure Service Health','Azure Resource Graph only','Azure Policy'],0,
+ 'Advisor analyses your resources and recommends changes across cost, security, reliability, operational excellence and performance.');
+mc('cost','Which feature lets you see where money is being spent by service, resource group or tag?',
+ ['Cost analysis in Microsoft Cost Management','Activity log','Network Watcher','Azure Backup reports'],0,
+ 'Cost analysis breaks down actual and forecast spend and supports grouping and filtering.');
+
+/* ===== Domain 2: storage ===== */
+
+match('storageacct','Match each redundancy option to its description. All items are used once.',
+ ['LRS','ZRS','GRS','GZRS'],
+ [['Three copies in a single datacenter in the primary region',0],['Three copies across availability zones in the primary region',1],['LRS in the primary region plus a copy in a paired secondary region',2],['ZRS in the primary region plus a copy in a secondary region',3]],
+ 'The G options add a secondary region. The Z options spread copies across zones.');
+mc('storageacct','You need a storage account that remains available during a datacenter failure in the region and allows read access to data in a secondary region during a regional outage. Which redundancy option fits?',
+ ['RA-GZRS','LRS','ZRS','GRS'],0,
+ 'RA-GZRS combines zone redundancy in the primary with a read-accessible secondary region.');
+mc('storageacct','Which redundancy option is the lowest cost?',
+ ['LRS','ZRS','GRS','RA-GZRS'],0,
+ 'LRS keeps all copies in one datacenter and costs the least, but it does not protect against a datacenter-level event.');
+mc('storageacct','Which statement about the name of an Azure storage account is true?',
+ ['It must be globally unique and use 3 to 24 lowercase letters and numbers','It must be unique only within the resource group','It can include hyphens and capital letters','It can be changed after creation'],0,
+ 'The name becomes part of a public endpoint, so it must be globally unique and cannot be renamed.');
+mc('storageacct','Data in Azure Storage is encrypted at rest. Which statement is true by default?',
+ ['Data is encrypted with Microsoft-managed keys, and you can choose customer-managed keys in Azure Key Vault','Encryption must be enabled manually for each container','Data is not encrypted unless you enable HTTPS','Only blobs are encrypted'],0,
+ 'Storage service encryption is always on. Customer-managed keys are optional.');
+mc('storageacct','Block blobs must be copied automatically from a container in one storage account to a container in another account. Which feature do you configure?',
+ ['Object replication','Soft delete','Lifecycle management','Snapshots'],0,
+ 'Object replication asynchronously copies block blobs between containers. It requires versioning, and change feed on the source account.');
+mc('storageacct','Which tool is a command-line utility for copying data to and from Azure Storage?',
+ ['AzCopy','Azure Advisor','Azure Monitor','Network Watcher'],0,
+ 'AzCopy copies blobs and files using Entra ID sign-in or SAS tokens. Storage Explorer is the graphical alternative.');
+mc('storageacct','Which account type should you choose for most scenarios needing blobs, files, queues and tables?',
+ ['Standard general-purpose v2','Premium page blobs','Premium file shares','Legacy Blob storage account'],0,
+ 'General-purpose v2 supports all the standard services and is the recommended default.');
+yn('storageacct','Statements about storage data management.',
+ [['Azure Storage Explorer provides a graphical interface to manage blobs, files and queues.',true],['AzCopy can authenticate by using a SAS token.',true],['Storage Explorer can only connect to storage accounts in your own subscription.',false],['A storage account can be moved to another region by changing a setting in the portal.',false]],
+ 'Storage Explorer can connect using other credentials, and an account cannot simply change region.');
+
+mc('storagesec','You want only virtual machines in one subnet to access a storage account over the Azure backbone. What should you configure?',
+ ['The storage firewall with a virtual network rule and a service endpoint','A resource lock','A tag on the subnet','A budget'],0,
+ 'Virtual network rules allow selected subnets, and the subnet needs the Microsoft.Storage service endpoint.');
+match('storagesec','Match each shared access signature type to its description. All items are used once.',
+ ['User delegation SAS','Service SAS','Account SAS'],
+ [['Signed with Microsoft Entra credentials, for Blob storage',0],['Signed with the account key and delegates access to one storage service',1],['Signed with the account key and can delegate access to multiple services',2]],
+ 'The user delegation SAS avoids the account key and is the most secure type.');
+mc('storagesec','You issued service SAS tokens that use a stored access policy. How can you revoke them without regenerating the account keys?',
+ ['Delete or change the stored access policy','Delete the storage account','Regenerate the SAS expiry in the portal for every token','Disable the container tier'],0,
+ 'Tokens that reference a stored access policy follow it, so deleting or changing the policy affects all of them.');
+mc('storagesec','You must immediately invalidate every SAS token that was signed with the primary access key. What should you do?',
+ ['Regenerate the primary access key','Create a new container','Change the storage tier','Enable soft delete'],0,
+ 'Tokens signed with a key stop working when that key is regenerated. Rotating one key while apps use the other avoids downtime.');
+yn('storagesec','Statements about storage account access keys.',
+ [['Each storage account has two access keys so that one can be rotated while the other is used.',true],['Access keys give full access to the data in the account.',true],['Regenerating a key does not affect SAS tokens signed with that key.',false],['Using Microsoft Entra authorization is generally preferred over access keys.',true]],
+ 'Keys are powerful, and regenerating one invalidates what was signed with it.');
+multi('storagesec','Which TWO options provide identity-based authentication over SMB for Azure Files?',
+ ['Active Directory Domain Services','Microsoft Entra Domain Services','Shared access signature in the connection string','Anonymous read access'],[0,1],
+ 'On-premises AD DS and Microsoft Entra Domain Services are supported identity sources. Entra Kerberos also supports hybrid identities.');
+mc('storagesec','What does enabling the storage firewall with a default action of Deny do?',
+ ['Blocks access except from the networks and IP ranges you allow','Deletes data from the account','Encrypts the data with a new key','Disables the access keys'],0,
+ 'The default action applies to the public endpoint. You then add allowed virtual networks and IP ranges.');
+mc('storagesec','A client needs read access to a single blob for the next 2 hours, without sharing the account key. What should you give them?',
+ ['A SAS token with read permission and a 2-hour expiry','The primary access key','The Owner role on the subscription','Anonymous container access'],0,
+ 'A SAS grants limited, time-bound access to specific resources.');
+
+match('blobfiles','Match each blob access tier to its use. Some items are not used.',
+ ['Hot','Cool','Cold','Archive'],
+ [['Frequently accessed data',0],['Infrequently accessed data stored for at least 30 days',1],['Rarely accessed data stored for at least 90 days',2]],
+ 'Archive is offline storage for data kept at least 180 days and was not described here.');
+mc('blobfiles','A blob in the Archive tier must be read. What must you do first?',
+ ['Rehydrate it to Hot or Cool, which can take hours','Read it directly with no delay','Copy the account key','Enable versioning'],0,
+ 'Archive blobs are offline. They must be rehydrated before they can be read.');
+mc('blobfiles','You want logs to move to the Cool tier after 30 days without modification and be deleted after 365 days. What should you use?',
+ ['Blob lifecycle management policy','Object replication','Soft delete','Stored access policy'],0,
+ 'Lifecycle rules automatically transition blobs between tiers and delete them based on age.');
+mc('blobfiles','You want deleted blobs to be recoverable for 14 days. What should you enable?',
+ ['Soft delete for blobs with a 14-day retention period','Archive tier','Container immutability only','A resource lock'],0,
+ 'Soft delete retains deleted data for the period you set so it can be restored.');
+mc('blobfiles','What is the difference between blob versioning and blob snapshots?',
+ ['Versioning is automatic whenever a blob is modified or deleted, and snapshots are taken manually','Snapshots are automatic and versions are manual','They are identical features','Versioning applies only to Azure Files'],0,
+ 'Versioning keeps previous versions automatically. A snapshot is a read-only point-in-time copy you create.');
+yn('blobfiles','Statements about Azure Files.',
+ [['Azure Files can be mounted using SMB.',true],['Share snapshots are read-only point-in-time copies of a file share.',true],['Soft delete can be enabled for Azure file shares.',true],['A file share requires its own virtual machine.',false]],
+ 'Azure Files is a managed file service and needs no server.');
+mc('blobfiles','Which blob type is optimised for append operations such as writing log files?',
+ ['Append blob','Block blob','Page blob','Table blob'],0,
+ 'Append blobs only allow adding data to the end. Block blobs suit general files, and page blobs suit disks.');
+mc('blobfiles','What is the minimum storage period before early deletion charges stop applying to the Cool tier?',
+ ['30 days','1 day','90 days','180 days'],0,
+ 'Cool is 30 days, Cold is 90 days and Archive is 180 days.');
+mc('blobfiles','Which feature restores a container that was accidentally deleted?',
+ ['Container soft delete','Lifecycle management','Object replication','Tier change'],0,
+ 'Container soft delete keeps the container and its blobs for the retention period.');
+dd('blobfiles','A {0} access tier is offline and must be rehydrated before use, and a lifecycle policy can move data between tiers {1}.',
+ [[['Hot','Cool','Archive'],2],[['automatically based on rules','only manually','only in the Archive tier']  ,0]],
+ 'Archive blobs are offline. Lifecycle management applies rules you define.');
+
+/* ===== Domain 3: compute ===== */
+
+mc('arm','Which section of an ARM template defines the values you supply at deployment time, such as a VM size or a location?',
+ ['parameters','variables','outputs','resources'],0,
+ 'Parameters are inputs. Variables are internal values, resources are what gets deployed, and outputs are returned after deployment.');
+mc('arm','What does this Bicep file deploy?',
+ ['A storage account in the resource group location with the Standard_LRS SKU','A virtual machine','A resource group','A storage account in East US'],0,
+ 'The resource block declares a storage account, and its location comes from the parameter, which defaults to the resource group location.',
+ "param location string = resourceGroup().location\nparam name string\n\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' = {\n  name: name\n  location: location\n  sku: { name: 'Standard_LRS' }\n  kind: 'StorageV2'\n}");
+ddc('arm','Complete the Azure CLI command to deploy a Bicep file to a resource group.',
+ 'az {0} group create \\\n  --resource-group rg1 \\\n  --{1} main.bicep',
+ [[['deployment','group','resource','template'],0],[['template-file','file','bicep','path'],0]],
+ 'az deployment group create deploys to a resource group, and --template-file points to the Bicep or ARM file.');
+mc('arm','A Bicep file must create a resource group. What must you do?',
+ ['Set targetScope to subscription and deploy at subscription scope','Deploy it with az deployment group create','Add a lock to the file','Use a management group tag'],0,
+ 'Resource groups exist at subscription scope, so the file declares targetScope = subscription and is deployed with az deployment sub create.',
+ "targetScope = 'subscription'\n\nresource rg 'Microsoft.Resources/resourceGroups@2022-09-01' = {\n  name: 'rg-app'\n  location: 'westeurope'\n}");
+mc('arm','You want a preview of the changes a Bicep deployment would make before running it. What should you use?',
+ ['The what-if operation','The Activity log','Azure Advisor','The export template option'],0,
+ 'what-if compares the template with the current state and shows creates, modifies and deletes without deploying.');
+match('arm','Match each deployment mode or tool to its description. Some items are not used.',
+ ['Incremental mode','Complete mode','What-if','Export template','Resource lock'],
+ [['Adds or updates resources in the template and leaves other resources alone',0],['Deletes resources in the resource group that are not in the template',1],['Previews the effect of a deployment without making changes',2],['Generates an ARM template from existing resources',3]],
+ 'Resource lock is a governance feature and not a deployment mode.');
+mc('arm','You need to turn an existing ARM JSON template into Bicep. Which command helps?',
+ ['az bicep decompile','az bicep build','az deployment sub create','az group export'],0,
+ 'decompile converts ARM JSON to Bicep. build does the opposite.');
+mc('arm','A template deployment must reference a VM that already exists in the resource group rather than create it. Which Bicep keyword do you use?',
+ ['existing','dependsOn','targetScope','module'],0,
+ 'The existing keyword lets you refer to a resource that is already deployed.',
+ "resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' existing = {\n  name: 'vm1'\n}");
+
+mc('vms','A VM was shut down from inside the guest operating system. You are still being billed for compute. Why?',
+ ['The VM is stopped but not deallocated','Azure bills storage only','The VM is in a different region','The VM has a public IP address'],0,
+ 'Stopping from within the OS leaves compute allocated. Stopping the VM from Azure deallocates it and stops compute billing.');
+mc('vms','You are resizing a VM and the new size is not offered in the list. What is the likely reason and fix?',
+ ['The size is not available on the current hardware cluster, so deallocate the VM and try again','Sizes can never be changed','You must delete the resource group','You must change the region tag'],0,
+ 'Deallocating can allow the VM to move to a cluster that supports the new size.');
+match('vms','Match each availability option to what it protects against. Some items are not used.',
+ ['Availability set','Availability zones','Region pair','Single VM with Premium SSD'],
+ [['Hardware failures and planned maintenance within a datacenter',0],['Failure of an entire datacenter within a region',1],['Disaster affecting a whole region',2]],
+ 'A single VM with Premium SSD has a high single-instance SLA but no redundancy.');
+yn('vms','Statements about availability sets and zones.',
+ [['An availability set spreads VMs across fault domains and update domains.',true],['Availability zones are physically separate locations within a region.',true],['You can add an existing VM to an availability set after it has been created without recreating it.',false],['Availability zones protect against a failure of the entire Azure region.',false]],
+ 'The availability set must be chosen at creation. Zones protect within a region and not against a region-wide outage.');
+mc('vms','Which disk type should you choose for a production database that needs the highest IOPS and lowest latency?',
+ ['Ultra Disk','Standard HDD','Standard SSD','Ephemeral OS disk'],0,
+ 'Ultra Disks offer the highest performance. Standard HDD is the lowest cost with the lowest performance.');
+mc('vms','What happens to data stored on the temporary disk of an Azure VM?',
+ ['It can be lost when the VM is redeployed or moved to a different host','It is backed up automatically','It is replicated to another region','It is encrypted with a customer-managed key by default'],0,
+ 'The temporary disk is for transient data such as page files and caches.');
+mc('vms','You must encrypt temporary disks and caches of a VM, as well as data flowing to storage. Which feature should you use?',
+ ['Encryption at host','Storage account redundancy','Resource locks','Azure Policy modify effect'],0,
+ 'Encryption at host encrypts data on the VM host, including temporary disks and caches. The feature must be enabled on the subscription first.');
+mc('vms','You need to move a VM to another resource group in the same subscription and region. What should you do?',
+ ['Use the Move option for the VM and its related resources','Re-create the VM from a backup only','Change the tag on the VM','Create a lock on the VM'],0,
+ 'Resources can be moved between resource groups. The resource ID changes, and the region stays the same.');
+mc('vms','You need to move a VM to a different Azure region. Which service helps?',
+ ['Azure Resource Mover','Resource locks','Azure Advisor','Azure Cost Management'],0,
+ 'A move across regions needs Resource Mover or a replication-based approach. The Move option for resource groups does not change region.');
+mc('vms','Which VM scale set rule scales out when average CPU is above 70 percent for 10 minutes?',
+ ['An autoscale rule based on a metric','A resource lock','A tag','A policy assignment'],0,
+ 'Autoscale rules use metrics and thresholds, with minimum, maximum and default instance counts.');
+yn('vms','Statements about Virtual Machine Scale Sets.',
+ [['A scale set can add or remove instances automatically based on a schedule or metrics.',true],['A scale set can be spread across availability zones.',true],['A scale set can only contain a single instance.',false],['A scale set requires each instance to be created manually.',false]],
+ 'Scale sets manage groups of VMs and can scale automatically.');
+mc('vms','When autoscaling, what is the purpose of the cooldown period?',
+ ['It waits after a scale action before another one can run, to avoid flapping','It reduces the VM size','It deletes unused disks','It disables the load balancer'],0,
+ 'A cooldown gives metrics time to stabilise after an action.');
+mc('vms','Which PowerShell cmdlet creates a new Azure VM?',
+ ['New-AzVM','New-AzVirtualNetwork','Set-AzVMSize','Get-AzVM'],0,
+ 'New-AzVM creates a VM, and the other cmdlets create networks, resize or list.');
+mc('vms','Which Azure CLI command creates a VM?',
+ ['az vm create','az group create','az network vnet create','az vmss show'],0,
+ 'az vm create deploys a VM along with required networking by default.');
+
+mc('containers','You need a private registry to store Docker images in Azure, and to replicate it to multiple regions. Which SKU is required for geo-replication?',
+ ['Premium','Basic','Standard','Free'],0,
+ 'Azure Container Registry geo-replication is a Premium feature.');
+mc('containers','You need to run a single container quickly without managing servers or an orchestrator. Which service is simplest?',
+ ['Azure Container Instances','Azure Kubernetes Service','Virtual Machine Scale Sets','Azure Batch only'],0,
+ 'ACI runs containers on demand, billed by the second, with no orchestration.');
+mc('containers','You need serverless containers that scale to zero based on HTTP traffic or queue length, without managing Kubernetes. Which service fits?',
+ ['Azure Container Apps','Azure Container Instances','Azure Virtual Machines','Azure Backup'],0,
+ 'Container Apps runs microservices and jobs, and scales on HTTP or event-driven rules including to zero.');
+yn('containers','Statements about Azure Container Instances.',
+ [['Containers in a container group share a lifecycle and network.',true],['A restart policy can be Always, OnFailure or Never.',true],['CPU and memory can be changed on a running container group without re-creating it.',false],['ACI requires you to manage the host virtual machines.',false]],
+ 'Resources for a container group are set at creation. The host is managed by Azure.');
+mc('containers','How do you control the number of replicas for a container app?',
+ ['Set minimum and maximum replicas and scale rules','Resize the App Service plan','Use an availability set','Create a resource lock'],0,
+ 'Container Apps scale between the minimum and maximum using scale rules.');
+
+mc('appservice','You need deployment slots for an App Service. What is the minimum pricing tier?',
+ ['Standard','Free','Shared','Basic'],0,
+ 'Slots and autoscale begin at the Standard tier.');
+match('appservice','Match each scaling action to its description. All items are used once.',
+ ['Scale up','Scale out'],
+ [['Change the App Service plan to a larger pricing tier or size',0],['Increase the number of instances running the app',1]],
+ 'Scale up adds capacity per instance. Scale out adds instances.');
+mc('appservice','What is the relationship between an App Service plan and an app?',
+ ['An app runs on a plan, and a plan can host several apps that share its resources','Each app has its own plan that cannot be shared','A plan is a type of storage account','A plan is a deployment slot'],0,
+ 'The plan defines region, operating system, size and pricing tier, and apps on it share the compute.');
+order('appservice','Arrange the steps to release a new version with a deployment slot.',
+ ['Deploy to the staging slot','Test the staging slot','Swap the staging slot into production','Swap back if issues appear'],
+ 'The swap makes the validated version live, and swapping back is the rollback.');
+mc('appservice','A setting such as a connection string must stay with a slot and not move during a swap. What should you do?',
+ ['Mark it as a deployment slot setting','Delete the slot','Use a different plan','Add a resource lock'],0,
+ 'Slot settings are sticky and remain with the slot when it is swapped.');
+mc('appservice','You want to map a custom subdomain www.contoso.com to an App Service. Which DNS record type do you create?',
+ ['CNAME','MX','SOA','NS only'],0,
+ 'A subdomain uses a CNAME to the default app hostname, and Azure verifies ownership. A root domain uses an A record.');
+mc('appservice','Outbound traffic from an App Service must reach resources in a virtual network. What should you configure?',
+ ['Virtual network integration','A private endpoint','A deployment slot','An alias record'],0,
+ 'VNet integration controls outbound traffic. A private endpoint controls inbound access.');
+mc('appservice','You want inbound access to an App Service only through a private IP address in your virtual network. What should you use?',
+ ['A private endpoint','Virtual network integration','A scale rule','A custom domain'],0,
+ 'A private endpoint gives the app a private IP for inbound connections.');
+yn('appservice','Statements about App Service security and backup.',
+ [['The HTTPS Only setting redirects HTTP requests to HTTPS.',true],['App Service Managed Certificates are available at no extra cost for supported custom domains.',true],['Backups of an app can be written to an Azure storage account.',true],['Custom backups are available on the Free tier.',false]],
+ 'Backup and restore require a higher tier. Managed certificates have restrictions, such as no wildcards.');
+
+/* ===== Domain 4: virtual networking ===== */
+
+mc('vnet','You create a subnet with the address range 10.0.1.0/24. How many IP addresses can you assign to resources?',
+ ['251','254','256','250'],0,
+ 'Azure reserves five addresses in each subnet: network, default gateway, two for DNS mapping, and broadcast.');
+mc('vnet','Two virtual networks have address spaces 10.0.0.0/16 and 10.0.0.0/24. Can you peer them?',
+ ['No, because the address spaces overlap','Yes, if they are in the same region','Yes, if you use a lock','Yes, always'],0,
+ 'Peered networks must not have overlapping address spaces.');
+yn('vnet','Statements about virtual network peering.',
+ [['Peering can connect virtual networks in different regions.',true],['Peering is not transitive: if A peers with B and B with C, A cannot reach C by default.',true],['Peered networks communicate over the public internet.',false],['Peering can be configured between networks in different subscriptions.',true]],
+ 'Peering uses the Microsoft backbone and is not transitive.');
+mc('vnet','Which setting allows a peered virtual network to use a VPN gateway in another virtual network?',
+ ['Use remote gateways, with Allow gateway transit on the other side','Enable service endpoints','Create a UDR','Add a tag'],0,
+ 'One peering allows gateway transit, and the other uses the remote gateway.');
+mc('vnet','All outbound internet traffic from a subnet must go through a network virtual appliance. What should you configure?',
+ ['A route table with a route to 0.0.0.0/0 with next hop type Virtual appliance, associated to the subnet','A new NSG','A service endpoint','An alias record'],0,
+ 'User-defined routes override default system routes for the subnet they are associated with.');
+match('vnet','Match each route next hop type to its description. Some items are not used.',
+ ['Virtual appliance','Virtual network gateway','Internet','None','Virtual network'],
+ [['Send traffic to an IP address of an NVA or firewall',0],['Send traffic to a VPN or ExpressRoute gateway',1],['Send traffic to the internet',2],['Drop the traffic',3]],
+ 'The Virtual network next hop type is the default for traffic within the address space.');
+mc('vnet','Which Standard SKU public IP behaviour is correct?',
+ ['It is static and closed to inbound traffic until an NSG allows it','It is dynamic and open by default','It cannot be associated with a NIC','It must be zone-redundant only'],0,
+ 'Standard public IPs are secure by default, and you must allow traffic with a network security group.');
+mc('vnet','A VM cannot reach another VM in a peered network. Which Network Watcher tool checks whether an NSG allows a specific packet?',
+ ['IP flow verify','Packet capture only','Traffic Analytics only','Resource health'],0,
+ 'IP flow verify checks a 5-tuple against NSG rules and tells you which rule allows or denies it.');
+mc('vnet','Which Network Watcher tool shows the next hop for traffic from a VM to a destination?',
+ ['Next hop','Connection monitor','Topology','Packet capture'],0,
+ 'Next hop reveals the route used and the type, which helps diagnose a bad UDR.');
+mc('vnet','When route entries overlap, which one does Azure use?',
+ ['The most specific address prefix (longest prefix match)','The first one created','The one with the highest priority number','The system route always'],0,
+ 'Azure uses longest prefix match, and for equal prefixes the user-defined route beats system routes.');
+
+mc('netsec','An NSG has two inbound rules: priority 200 allows TCP 443 from any, and priority 300 denies all from any. A request arrives on TCP 443. What happens?',
+ ['It is allowed, because the rule with the lower number is processed first','It is denied, because deny wins','It is denied, because the higher number is processed first','It is allowed only if a UDR exists'],0,
+ 'Rules are processed in priority order, with lower numbers first, and processing stops at the first match.');
+yn('netsec','Statements about network security groups.',
+ [['An NSG can be associated with a subnet or a network interface.',true],['NSGs are stateful, so return traffic for an allowed connection is permitted.',true],['The default rules include one that allows inbound traffic from the virtual network.',true],['A NSG can only filter by IP address and cannot use service tags.',false]],
+ 'NSG rules can use service tags and application security groups as sources and destinations.');
+mc('netsec','You want to write NSG rules for a group of web servers without listing their IP addresses. What should you use?',
+ ['An application security group','A route table','A service endpoint','A resource group'],0,
+ 'ASGs let you group NICs and reference the group in rules.');
+mc('netsec','Which feature shows the combined rules from the subnet NSG and the NIC NSG that apply to a VM?',
+ ['Effective security rules','Cost analysis','Activity log','Soft delete'],0,
+ 'Effective security rules on a network interface show the merged result, which helps explain unexpected blocks.');
+mc('netsec','You need browser-based RDP and SSH to VMs without public IPs on the VMs. Which service should you use?',
+ ['Azure Bastion','Azure Front Door','Azure Traffic Manager','Application Gateway'],0,
+ 'Bastion provides secure connectivity over TLS from the portal to private VMs, and needs a subnet named AzureBastionSubnet.');
+match('netsec','Match each private connectivity option to its description. All items are used once.',
+ ['Service endpoint','Private endpoint'],
+ [['Extends the virtual network identity to a PaaS service, which still uses its public IP',0],['Gives the PaaS service a private IP address inside your virtual network',1]],
+ 'A private endpoint brings the service into your network with a private IP. A service endpoint keeps using the public endpoint with network rules.');
+mc('netsec','Which DNS zone is commonly needed so that a private endpoint for Blob Storage resolves to its private IP?',
+ ['privatelink.blob.core.windows.net','blob.core.windows.net as a public zone','contoso.com','azure.com'],0,
+ 'A private DNS zone linked to the virtual network maps the service name to the private endpoint IP.');
+mc('netsec','What is the required name of the subnet used by Azure Bastion?',
+ ['AzureBastionSubnet','BastionSubnet','GatewaySubnet','AzureFirewallSubnet'],0,
+ 'Bastion needs a dedicated subnet with exactly that name.');
+multi('netsec','Which TWO changes reduce public exposure of a storage account?',
+ ['Create a private endpoint','Disable public network access','Add a tag','Enable soft delete'],[0,1],
+ 'A private endpoint plus disabling public access keeps traffic on private paths. Tags and soft delete do not affect exposure.');
+
+mc('dnslb','You host contoso.com in Azure DNS. What must you do at the domain registrar so the zone is used?',
+ ['Set the registrar name servers to the Azure DNS name servers for the zone','Create an A record at the registrar only','Add a tag to the zone','Create a virtual network peering'],0,
+ 'Delegation to Azure DNS name servers makes the zone authoritative.');
+mc('dnslb','You need a DNS record at the zone apex (contoso.com) pointing to an Azure resource such as a public IP. Which record type works?',
+ ['An alias record','A CNAME record','A TXT record','An NS record'],0,
+ 'CNAME is not allowed at the apex. Alias records can point to Azure resources there.');
+mc('dnslb','Virtual machines in a virtual network must resolve each other by name using an Azure DNS private zone with automatic registration. What do you do?',
+ ['Link the virtual network to the private DNS zone with auto-registration enabled','Create public records manually','Assign a lock to the zone','Enable Bastion'],0,
+ 'Virtual network links control resolution, and auto-registration creates records for VMs.');
+match('dnslb','Match each Azure service to the best description. Some items are not used.',
+ ['Load Balancer','Application Gateway','Traffic Manager','Front Door','Azure DNS'],
+ [['Layer 4 load balancing for TCP and UDP within a region',0],['Layer 7 regional load balancer with URL routing and WAF',1],['DNS-based traffic routing across regions',2],['Global layer 7 entry point with acceleration and WAF',3]],
+ 'Azure DNS hosts zones and was not described.');
+mc('dnslb','You need to route /images and /api to different backend pools using the same public IP. Which service fits?',
+ ['Application Gateway','Azure Load Balancer','Traffic Manager','Azure Bastion'],0,
+ 'Application Gateway understands HTTP and can route by URL path and host headers.');
+mc('dnslb','A load balancer backend VM is marked unhealthy and receives no traffic. What is a likely cause?',
+ ['The health probe fails, for example because an NSG blocks the probe or the app is not listening','The VM has a tag','The VM is in a resource group','The load balancer has no public IP'],0,
+ 'Probes come from the AzureLoadBalancer tag, so they must be allowed and the probed port must respond.');
+yn('dnslb','Statements about Azure Load Balancer.',
+ [['A public load balancer has a public frontend IP, and an internal one has a private frontend IP.',true],['A load balancer distributes traffic using a hash of source, destination and ports by default.',true],['Azure Load Balancer inspects HTTP URLs to route traffic.',false],['Health probes determine which backend instances receive traffic.',true]],
+ 'Load Balancer works at layer 4 and does not look at URLs.');
+
+/* ===== Domain 5: monitor and maintain ===== */
+
+match('monitor','Match each Azure Monitor data type to its description. All items are used once.',
+ ['Metrics','Resource logs','Activity log'],
+ [['Numeric values collected at intervals, suited to near real-time alerts',0],['Detailed operations within a resource, sent through diagnostic settings',1],['Subscription-level events such as who created or deleted a resource',2]],
+ 'Metrics are lightweight numbers. Resource logs need a diagnostic setting. The activity log covers management operations.');
+mc('monitor','You want resource logs from a storage account kept for analysis with KQL. Where should a diagnostic setting send them?',
+ ['A Log Analytics workspace','An Azure Policy initiative','A resource lock','A route table'],0,
+ 'A Log Analytics workspace stores logs that you query with KQL.');
+mc('monitor','What does this query return?',
+ ['The count of each operation recorded in the activity log in the last day','All metrics for the day','Failed VM backups','A list of NSG rules'],0,
+ 'It filters AzureActivity to the last day and counts rows by operation name.',
+ 'AzureActivity\n| where TimeGenerated > ago(1d)\n| summarize count() by OperationNameValue');
+mc('monitor','You want to be notified by email and SMS when VM CPU is above 90 percent for 5 minutes. What do you create?',
+ ['A metric alert rule and an action group','A budget','A resource lock','A diagnostic setting only'],0,
+ 'The alert rule defines the condition, and the action group defines who is notified.');
+mc('monitor','During a planned maintenance window you do not want alert notifications to be sent. What should you use?',
+ ['An alert processing rule that suppresses notifications','Delete the alert rule','Disable the action group permanently','Change the tags'],0,
+ 'Alert processing rules can suppress or modify actions for a schedule without deleting rules.');
+match('monitor','Match each Azure Monitor Insights feature to what it monitors. All items are used once.',
+ ['VM Insights','Storage Insights','Network Insights'],
+ [['Performance and dependencies of virtual machines',0],['Capacity, availability and performance of storage accounts',1],['Health and metrics for network resources',2]],
+ 'Each Insights experience provides a curated view over Azure Monitor data.');
+mc('monitor','Which Network Watcher feature monitors connectivity and latency between a source and a destination over time?',
+ ['Connection monitor','IP flow verify','Packet capture','Topology'],0,
+ 'Connection monitor provides ongoing end-to-end monitoring and can alert on failures.');
+yn('monitor','Statements about Azure Monitor.',
+ [['Platform metrics are collected automatically for most Azure resources.',true],['Resource logs require a diagnostic setting to be collected.',true],['The Azure Monitor Agent collects data from VMs by using data collection rules.',true],['Metrics are stored in a Log Analytics workspace by default.',false]],
+ 'Platform metrics go to the Azure Monitor metrics store. Logs need to be sent to a destination.');
+
+mc('backup','You need to back up Azure VMs and SQL Server running in VMs. Which vault should you create?',
+ ['A Recovery Services vault','A Key Vault','A storage account','A Log Analytics workspace'],0,
+ 'Recovery Services vaults protect VMs and databases in VMs. Backup vaults support newer workloads such as disks and blobs.');
+mc('backup','What defines when a backup runs and how long recovery points are retained?',
+ ['A backup policy','A resource lock','A budget','An action group'],0,
+ 'A policy contains schedule and retention settings for daily, weekly, monthly and yearly points.');
+mc('backup','You want to restore a single deleted file from a VM backup. Which option is best?',
+ ['File recovery from the recovery point','Restore the whole VM over the original','Delete the vault','Create a new vault'],0,
+ 'File recovery mounts the recovery point so you can copy out individual files.');
+mc('backup','What is required to protect an Azure VM with Azure Backup?',
+ ['The backup extension, which is installed automatically when you enable backup','A VPN gateway','A load balancer','A public IP address'],0,
+ 'Enabling backup installs the extension and takes snapshots according to the policy.');
+yn('backup','Statements about Azure Backup vaults.',
+ [['You choose the storage redundancy of a vault before protecting items.',true],['Soft delete helps recover backup data that was deleted.',true],['A vault can be in any region regardless of the VMs being protected.',false],['A backup policy can have daily, weekly, monthly and yearly retention.',true]],
+ 'The vault must be in the same region as the VMs it protects.');
+order('backup','Arrange the steps of a planned Azure Site Recovery failover test.',
+ ['Enable replication for the VM to a secondary region','Run a test failover to an isolated network','Validate the test VM','Clean up the test failover'],
+ 'A test failover does not affect production, and you clean up the test resources afterwards.');
+mc('backup','You run a failover to the secondary region and want to make it permanent. Which step follows?',
+ ['Commit the failover','Clean up test failover','Delete the replication policy','Resize the vault'],0,
+ 'After a failover, you commit it. Reprotect and failback come later when the primary is available.');
+mc('backup','Which Azure service replicates VMs to another region to support disaster recovery?',
+ ['Azure Site Recovery','Azure Advisor','Azure Policy','Azure Bastion'],0,
+ 'Site Recovery replicates workloads and orchestrates failover with recovery plans.');
+mc('backup','You want to see which backups failed in the last week. What should you use?',
+ ['Backup reports and alerts','Cost analysis','Effective security rules','Tags'],0,
+ 'Backup reports use Log Analytics data, and alerts can notify you of failures.');
+
+return {Q:Q,DOMAINS:DOMAINS,EXAM_MIX:EXAM_MIX,TOPICS:TOPICS};
+})(),({
+ id:'az104',code:'AZ-104',name:'Azure Administrator',
+ title:'AZ-104 Practice Lab',
+ eyebrow:'Exam AZ-104 · Microsoft Azure Administrator',
+ outline:'the skills outline as of 17 April 2026',
+ tips:[
+  'Read the whole scenario and note the constraint: cost, effort, security, downtime or scope.',
+  'Know the scope. Many answers differ only in where something is applied: management group, subscription, resource group or resource.',
+  'Separate look-alikes: Entra roles vs Azure roles, service endpoint vs private endpoint, scale up vs scale out, LRS vs ZRS vs GRS.',
+  'Answer everything. A blank cannot score, and there is no partial credit.',
+  'Flag a hard question and return to it from the question map.'
+ ],
+ links:[
+  ['Study guide for Exam AZ-104','https://learn.microsoft.com/en-gb/credentials/certifications/resources/study-guides/az-104','Guide'],
+  ['Exam AZ-104 page','https://learn.microsoft.com/en-us/credentials/certifications/exams/az-104/','Guide'],
+  ['Free practice assessment','https://learn.microsoft.com/en-us/credentials/certifications/azure-administrator/practice/assessment?assessment-type=practice&assessmentId=21&practice-assessment-type=certification','Practice'],
+  ['Exam sandbox, to try every question type','https://go.microsoft.com/fwlink/?linkid=2226877','Sandbox'],
+  ['Exam AZ-104 prep videos','https://aka.ms/AZ104-ExamPrep','Video'],
+  ['Manage identities and governance','https://learn.microsoft.com/en-us/training/paths/az-104-manage-identities-governance/','Learn'],
+  ['Implement and manage storage','https://learn.microsoft.com/en-us/training/paths/az-104-manage-storage/','Learn'],
+  ['Deploy and manage compute resources','https://learn.microsoft.com/training/paths/az-104-manage-compute-resources','Learn'],
+  ['Configure and manage virtual networks','https://learn.microsoft.com/en-us/training/paths/az-104-manage-virtual-networks/','Learn'],
+  ['Monitor and back up Azure resources','https://learn.microsoft.com/en-us/training/paths/az-104-monitor-backup-resources/','Learn'],
+  ['Official AZ-104 labs on GitHub Pages','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/','Labs']
+ ]
+}),{cards:[
+['entra','Entra roles vs Azure roles','Microsoft Entra roles manage the directory (users, groups, apps). Azure RBAC roles manage Azure resources (VMs, storage, networks).'],
+['entra','User Administrator','A Microsoft Entra role: create and manage users and reset passwords. It does not grant access to Azure resources.'],
+['entra','Dynamic group','Membership is set by a rule on user or device attributes. Needs Entra ID P1 or higher.'],
+['entra','Group-based licensing','Assign licences to a group and members inherit them. Users need a usage location first.'],
+['entra','External (guest) users','Invited with B2B collaboration. They sign in with their own identity provider.'],
+['entra','Self-service password reset','Lets users reset their own password. Can be enabled for all users or a selected group. Users must register methods first.'],
+['rbac','Owner, Contributor, Reader, User Access Administrator','Owner: everything including assigning roles. Contributor: manage resources, no role assignment. Reader: view only. User Access Administrator: manage access only.'],
+['rbac','Role assignment','Security principal + role definition + scope.'],
+['rbac','Scope order','Management group, subscription, resource group, resource. Assignments inherit downwards.'],
+['rbac','Combining role assignments','Permissions are additive. Reader at subscription plus Contributor on a resource group means Contributor on that group.'],
+['rbac','Custom role','JSON definition with Actions, NotActions and AssignableScopes.'],
+['rbac','Check access','The IAM blade tool that shows what access a user, group or service principal has at that scope.'],
+['governance','Azure Policy vs RBAC','Policy controls what resources can look like (location, SKU, tags). RBAC controls who can do what.'],
+['governance','Policy effects','Deny blocks. Audit records non-compliance. Modify changes properties such as tags. DeployIfNotExists deploys a related resource. Disabled turns it off.'],
+['governance','Policy initiative','A group of policy definitions assigned together.'],
+['governance','Resource locks','CanNotDelete: read and modify allowed. ReadOnly: read only. Locks apply to everyone, including owners, and are inherited.'],
+['governance','Tags','Name-value pairs for organising and billing. Not inherited by default. Use Policy to enforce or copy them.'],
+['governance','Management groups','Containers above subscriptions. Apply policy and RBAC once to many subscriptions.'],
+['governance','Resource groups','A resource belongs to one group. Deleting the group deletes its resources. Resources in a group can be in different regions.'],
+['cost','Budgets','Track spend against a limit and alert at thresholds. They do not stop resources by default.'],
+['cost','Azure Advisor','Personalised recommendations for cost, security, reliability, operational excellence and performance.'],
+['cost','Cost analysis','Break down spend by service, resource group, tag or location.'],
+['storageacct','Redundancy options','LRS: 3 copies in one datacenter. ZRS: across zones. GRS: LRS plus a secondary region. GZRS: ZRS plus a secondary region. RA adds read access to the secondary.'],
+['storageacct','Storage account name rules','3 to 24 characters, lowercase letters and numbers only, globally unique.'],
+['storageacct','Storage encryption','Always on at rest with Microsoft-managed keys. Customer-managed keys in Key Vault are optional.'],
+['storageacct','Object replication','Asynchronous copy of block blobs between containers or accounts. Needs versioning, and change feed on the source.'],
+['storageacct','AzCopy vs Storage Explorer','AzCopy is the command line. Storage Explorer is the graphical tool.'],
+['storagesec','Storage firewall','Default action Deny, then allow selected virtual networks (via service endpoints) and IP ranges.'],
+['storagesec','SAS types','User delegation SAS: signed with Entra credentials (Blob). Service SAS: one service, signed with the account key. Account SAS: multiple services, signed with the account key.'],
+['storagesec','Stored access policy','Lets you change or revoke service SAS tokens that use it without regenerating keys.'],
+['storagesec','Access keys','Two keys per account for rotation. Regenerating a key invalidates SAS tokens signed with it.'],
+['storagesec','Identity-based access for Azure Files','Active Directory Domain Services, Microsoft Entra Domain Services, or Entra Kerberos for hybrid identities, over SMB.'],
+['blobfiles','Blob access tiers','Hot: frequent. Cool: 30+ days. Cold: 90+ days. Archive: 180+ days and offline, needs rehydration.'],
+['blobfiles','Blob protection features','Soft delete recovers deleted data. Versioning keeps prior versions automatically. Snapshots are manual point-in-time copies.'],
+['blobfiles','Lifecycle management','Rules that move blobs between tiers or delete them based on age.'],
+['blobfiles','Blob types','Block: general files. Append: logs. Page: disks and random access.'],
+['arm','Template sections','parameters (inputs), variables, resources, outputs.'],
+['arm','Deployment modes','Incremental (default) adds and updates. Complete deletes resources in the group that are not in the template.'],
+['arm','What-if','Previews what a deployment would create, change or delete.'],
+['arm','Bicep tips','az bicep decompile converts ARM JSON to Bicep. The existing keyword references a deployed resource. targetScope = subscription is needed to create resource groups.'],
+['arm','Deployment scopes','Resource group, subscription, management group and tenant. Use az deployment group, sub, mg or tenant create.'],
+['vms','Stopped vs deallocated','Stopping from inside the guest OS leaves compute allocated and billed. Stopping from Azure deallocates it.'],
+['vms','Availability set vs zones','Availability set: fault and update domains in one datacenter. Zones: separate datacenters within a region. Neither protects against a whole-region outage.'],
+['vms','Disk types','Standard HDD, Standard SSD, Premium SSD, Ultra Disk (highest performance). The temporary disk is not persistent.'],
+['vms','Encryption at host','Encrypts temp disks and caches on the VM host. The feature must be enabled on the subscription.'],
+['vms','Moving a VM','Between resource groups or subscriptions: Move. Between regions: Azure Resource Mover or replication.'],
+['vms','VM scale sets','Autoscale by metric or schedule with min, max and default counts. A cooldown avoids flapping.'],
+['containers','ACR SKUs','Basic, Standard, Premium. Geo-replication needs Premium.'],
+['containers','ACI vs Container Apps','ACI: simplest single containers, billed per second, no orchestration. Container Apps: serverless microservices, scale to zero on HTTP or events.'],
+['appservice','App Service plan','Defines region, operating system, size and tier. Apps on the plan share its compute.'],
+['appservice','Scale up vs scale out','Up: bigger plan. Out: more instances.'],
+['appservice','Plan tiers and features','Deployment slots, autoscale and backup need Standard or higher.'],
+['appservice','Deployment slots','Deploy, test, swap. Slot settings stay with the slot. Swap back to roll back.'],
+['appservice','VNet integration vs private endpoint','Integration: outbound from the app to a VNet. Private endpoint: private inbound access to the app.'],
+['appservice','Custom domain records','Subdomain: CNAME. Root (apex): A record. Azure verifies ownership with a TXT record.'],
+['vnet','Reserved addresses','Azure reserves 5 addresses per subnet, so a /24 has 251 usable.'],
+['vnet','Peering','Needs non-overlapping address spaces, works across regions and subscriptions, and is not transitive.'],
+['vnet','User-defined routes','Route table on a subnet. Common use: 0.0.0.0/0 with next hop Virtual appliance. Longest prefix wins.'],
+['vnet','Standard public IP','Static, and closed to inbound traffic until an NSG allows it.'],
+['vnet','Network Watcher tools','IP flow verify (does an NSG allow this packet), Next hop (which route), Connection troubleshoot, Packet capture, Topology.'],
+['netsec','NSG rules','Lower priority number is processed first. Stateful. Applied to a subnet or NIC. Default rules allow VNet traffic and deny other inbound.'],
+['netsec','Application security groups','Group NICs so you can use the group in NSG rules instead of IP addresses.'],
+['netsec','Effective security rules','Shows the combined result of the NSGs that apply to a NIC.'],
+['netsec','Azure Bastion','Browser-based RDP and SSH over TLS to private VMs. Needs a subnet named AzureBastionSubnet.'],
+['netsec','Service endpoint vs private endpoint','Service endpoint: VNet identity to a PaaS service, still its public IP. Private endpoint: private IP in your VNet, with a private DNS zone.'],
+['dnslb','Azure DNS basics','Public zones need delegation to Azure name servers at the registrar. Private zones link to VNets and can auto-register VMs. Alias records can sit at the apex.'],
+['dnslb','Load balancing services','Load Balancer: layer 4, regional. Application Gateway: layer 7, regional, WAF. Traffic Manager: DNS-based, global. Front Door: global layer 7.'],
+['dnslb','Troubleshooting a load balancer','Check the health probe, that the AzureLoadBalancer tag is allowed in NSGs, and that the app listens on the probed port.'],
+['monitor','Metrics vs logs','Metrics: numbers, near real time, collected automatically. Logs: detailed records in Log Analytics queried with KQL, need a diagnostic setting.'],
+['monitor','Activity log','Subscription-level management events: who created, changed or deleted a resource.'],
+['monitor','Alerts','Alert rule defines the condition. Action group defines notifications and actions. Alert processing rules suppress or change actions.'],
+['monitor','Monitor Insights','VM Insights, Storage Insights and Network Insights give curated views per resource type.'],
+['monitor','Connection monitor','Ongoing end-to-end connectivity and latency monitoring in Network Watcher.'],
+['backup','Recovery Services vault','Protects VMs, databases in VMs and Azure Files. Must be in the same region as the VMs.'],
+['backup','Backup policy','Schedule plus retention (daily, weekly, monthly, yearly).'],
+['backup','Backup restore options','Create a new VM, restore disks, replace existing, or recover individual files.'],
+['backup','Azure Site Recovery','Replicates VMs to another region. Test failover (no production impact), failover, commit, reprotect, failback.']
+].map((c,i)=>({id:'az104-'+(i+1),topic:c[0],f:c[1],b:c[2]})),labs:[
+['Lab 01: Manage Microsoft Entra ID identities','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_01-Manage_Entra_ID_Identities.html',['Create a user and a security group','Create a group with dynamic membership rules','Invite an external (guest) user','Enable self-service password reset for a group']],
+['Lab 02a: Manage subscriptions and RBAC','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_02a_Manage_Subscriptions_and_RBAC_Entra.html',['Create a management group','Assign a built-in role at management group scope','Create a custom role','Use Check access to see what a user can do']],
+['Lab 02b: Manage governance via Azure Policy','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_02b-Manage_Governance_via_Azure_Policy.html',['Assign an allowed locations policy and test it','Apply a tag with a Modify policy','Add a CanNotDelete lock and try to delete the resource','Review the policy compliance results']],
+['Lab 03: Manage Azure resources by using ARM templates','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_03b-Manage_Azure_Resources_by_Using_ARM_Templates.html',['Export a template from an existing resource','Deploy a template with a parameter file','Convert a template to Bicep with az bicep decompile','Run a what-if before deploying']],
+['Lab 04: Implement virtual networking','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_04-Implement_Virtual_Networking.html',['Create a virtual network with two subnets','Create an NSG and an application security group, and a rule that uses it','Check the effective security rules on a NIC','Create a public and a private Azure DNS zone']],
+['Lab 05: Implement intersite connectivity','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_05-Implement_Intersite_Connectivity.html',['Peer two virtual networks','Test connectivity between VMs with Network Watcher','Create a route table with a user-defined route and associate it with a subnet']],
+['Lab 06: Implement network traffic management','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_06-Implement_Network_Traffic_Management.html',['Create an internal load balancer with a health probe','Create an Application Gateway with path-based routing','Break a health probe on purpose and see the effect']],
+['Lab 07: Manage Azure storage','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_07-Manage_Azure_Storage.html',['Create a storage account and choose a redundancy option','Upload a blob and change its access tier','Create a SAS token and a stored access policy','Restrict the storage firewall to a virtual network','Create an Azure file share and mount it']],
+['Lab 08: Manage virtual machines','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_08-Manage_Virtual_Machines.html',['Create a VM and connect to it','Resize a VM and add a data disk','Deploy a VM into an availability zone','Deploy a scale set and configure autoscale']],
+['Lab 09a: Implement web apps','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_09a-Implement_Web_Apps.html',['Create an App Service plan and a web app','Create a deployment slot and swap it','Configure autoscale for the plan','Add a custom domain and a TLS binding']],
+['Lab 09b: Implement Azure Container Instances','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_09b-Implement_Azure_Container_Instances.html',['Deploy a container to Azure Container Instances','Set a restart policy and view the logs']],
+['Lab 09c: Implement Azure Container Apps','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_09c-Implement-Azure-Container-Apps.html',['Deploy a container app with ingress','Configure a scale rule with minimum and maximum replicas']],
+['Lab 10: Implement data protection','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_10-Implement_Data_Protection.html',['Create a Recovery Services vault and a backup policy','Back up a VM and restore a file','Configure Site Recovery and run a test failover']],
+['Lab 11: Implement monitoring','https://microsoftlearning.github.io/AZ-104-MicrosoftAzureAdministrator/Instructions/Labs/LAB_11-Implement_Monitoring.html',['Create a Log Analytics workspace and a diagnostic setting','Create a metric alert rule and an action group','Query logs with KQL','Set up Connection monitor in Network Watcher']]
+].map((l,i)=>({id:'az104-L'+(i+1),t:l[0],u:l[1],tasks:l[2].map((t,j)=>({id:'az104-L'+(i+1)+'-'+(j+1),t:t}))}))});
 EXAMS.az400=Object.assign((function(){
 /* Shared helper that builds a question bank. Each question names a topic, and the topic fixes its domain. */
 function makeBank(TOPICS){
@@ -1466,6 +2119,20 @@ function cleanCS(o){
   return out;
 }
 const cardsOf=()=>X.cards||[];
+const labsOf=()=>X.labs||[];
+const LKEY=e=>'lab-labs-'+e;
+const memLabs={};
+function readLS(e){
+  try{const o=JSON.parse(localStorage.getItem(LKEY(e))||'null');if(o&&typeof o==='object')return o}catch(x){}
+  return memLabs[e]||{};
+}
+function writeLS(e,o){memLabs[e]=o;try{localStorage.setItem(LKEY(e),JSON.stringify(o))}catch(x){}}
+function cleanLS(o){
+  const out={};
+  if(!o||typeof o!=='object')return out;
+  Object.keys(o).forEach(k=>{if(/^[a-z0-9]+-L\d{1,3}-\d{1,3}$/.test(k)&&o[k])out[k]=1});
+  return out;
+}
 const BOX_DONE=3;
 function idleRender(){if(S.screen!=='quiz')render()}
 function loadLocal(){
@@ -1527,8 +2194,9 @@ function pickExam(){
 /* ---------- backup and import ---------- */
 function exportText(){
   const cards={};
-  Object.keys(EXAMS).forEach(e=>{const c=readCS(e);if(Object.keys(c).length)cards[e]=c});
-  return JSON.stringify({app:'cert-practice-lab',version:1,attempts:attempts,cards:cards},null,1);
+  const labs={};
+  Object.keys(EXAMS).forEach(e=>{const c=readCS(e);if(Object.keys(c).length)cards[e]=c;const l=readLS(e);if(Object.keys(l).length)labs[e]=l});
+  return JSON.stringify({app:'cert-practice-lab',version:1,attempts:attempts,cards:cards,labs:labs},null,1);
 }
 function cleanAttempt(a){
   if(!a||typeof a!=='object')return null;
@@ -1552,7 +2220,16 @@ async function importData(text){
       if(ch)writeCS(e,cur);
     });
   }
-  if(!list.length&&!cardsAdded)return 'No attempts or flashcard progress were found in that file.';
+  let labsAdded=0;
+  if(obj&&!Array.isArray(obj)&&obj.labs&&typeof obj.labs==='object'){
+    Object.keys(obj.labs).forEach(e=>{
+      if(!EXAMS[e])return;
+      const inc=cleanLS(obj.labs[e]),cur=readLS(e);let ch=false;
+      Object.keys(inc).forEach(k=>{if(!cur[k]){cur[k]=1;ch=true;labsAdded++}});
+      if(ch)writeLS(e,cur);
+    });
+  }
+  if(!list.length&&!cardsAdded&&!labsAdded)return 'No attempts, flashcard or lab progress were found in that file.';
   const have=new Set(attempts.map(a=>a.id));let added=0,bad=0;
   for(const raw of list){
     const a=cleanAttempt(raw);
@@ -1562,7 +2239,7 @@ async function importData(text){
     if(r==='fail')return 'Importing stopped after '+added+' attempts because saving failed.';
     have.add(a.id);added++;
   }
-  return 'Imported '+added+' new attempt'+(added===1?'':'s')+(cardsAdded?' and progress on '+cardsAdded+' flashcard'+(cardsAdded===1?'':'s'):'')+(bad?'; skipped '+bad+' that were not valid':'')+'.';
+  return 'Imported '+added+' new attempt'+(added===1?'':'s')+(cardsAdded?' and progress on '+cardsAdded+' flashcard'+(cardsAdded===1?'':'s'):'')+(labsAdded?(cardsAdded?', plus ':' and ')+labsAdded+' lab task'+(labsAdded===1?'':'s'):'')+(bad?'; skipped '+bad+' that were not valid':'')+'.';
 }
 function downloadBackup(){
   try{
@@ -1676,6 +2353,7 @@ function topnav(cur){
   h+='<button type="button" class="btn'+(cur==='home'?' pri':'')+'" data-act="home">Start a test</button>';
   const n=mine().length;
   if(cardsOf().length)h+='<button type="button" class="btn'+(cur==='cards'?' pri':'')+'" data-act="cards">Flashcards</button>';
+  if(labsOf().length)h+='<button type="button" class="btn'+(cur==='labs'?' pri':'')+'" data-act="labs">Labs</button>';
   h+='<button type="button" class="btn'+(cur==='progress'?' pri':'')+'" data-act="progress">Progress'+(n?' ('+n+')':'')+'</button></div>';
   return h;
 }
@@ -1941,7 +2619,7 @@ function reviewScreen(){
 
 function render(){
   const y=window.scrollY;
-  app.innerHTML=S.screen==='home'?home():S.screen==='quiz'?quiz():S.screen==='results'?results():S.screen==='progress'?progress():S.screen==='cards'?cardsScreen():reviewScreen();
+  app.innerHTML=S.screen==='home'?home():S.screen==='quiz'?quiz():S.screen==='results'?results():S.screen==='progress'?progress():S.screen==='cards'?cardsScreen():S.screen==='labs'?labsScreen():reviewScreen();
   if(S.screen==='quiz')tick();
   window.scrollTo(0,y);
 }
@@ -2024,6 +2702,23 @@ function cardsScreen(){
   return h;
 }
 
+/* ---------- labs checklist ---------- */
+function labsScreen(){
+  const labs=labsOf(),done=readLS(S.exam);
+  let tot=0,got=0;labs.forEach(l=>l.tasks.forEach(t=>{tot++;if(done[t.id])got++}));
+  let h=topnav('labs')+'<div class="eyebrow">'+esc(X.code)+' &middot; Hands-on practice</div><h1>Labs checklist</h1>';
+  h+='<p class="lede">Doing a task once makes it much easier to remember than reading about it. Tick each task when you have tried it yourself. Links open the official or free lab pages where one exists. Your ticks are stored in this browser and included in the backup on the Progress screen.</p>';
+  h+='<div class="cstats"><span><b>'+got+'</b> of '+tot+' tasks done</span></div>';
+  labs.forEach(l=>{
+    const n=l.tasks.filter(t=>done[t.id]).length;
+    h+='<section class="block labbox"><h2>'+(l.u?'<a href="'+esc(l.u)+'" target="_blank" rel="noopener noreferrer">'+esc(l.t)+'</a>':esc(l.t))+'<small>'+n+' of '+l.tasks.length+'</small></h2><ul class="labtasks">';
+    l.tasks.forEach(t=>{h+='<li><label><input type="checkbox" data-lab="'+t.id+'"'+(done[t.id]?' checked':'')+'><span>'+esc(t.t)+'</span></label></li>'});
+    h+='</ul></section>';
+  });
+  h+='<div class="row block"><button type="button" class="btn" data-act="lreset">Clear ticks</button></div>';
+  return h;
+}
+
 /* ---------- events ---------- */
 app.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
@@ -2041,6 +2736,8 @@ app.addEventListener('click',e=>{
     S.screen='review';render();window.scrollTo(0,0);return;
   }
   if(act==='cards'){clearInterval(S.timer);S.screen='cards';S.cd=null;S.msg='';render();window.scrollTo(0,0);return}
+  if(act==='labs'){clearInterval(S.timer);S.screen='labs';render();window.scrollTo(0,0);return}
+  if(act==='lreset'){writeLS(S.exam,{});render();return}
   if(act==='cmenu'){S.cd=null;S.msg='';render();window.scrollTo(0,0);return}
   if(act==='cstart'){const d=S.cd&&S.cd.deck?S.cd.deck:(S.cdeck||'all');startCards(d);return}
   if(act==='cshow'){S.cd.shown=true;render();return}
@@ -2082,6 +2779,7 @@ app.addEventListener('change',e=>{
   const t=e.target;
   if(t.id==='plan'){setExam(t.value);S.cd=null;S.cdeck='all';render();return}
   if(t.id==='cdeck'){S.cdeck=t.value;render();return}
+  if(t.dataset.lab){const d=readLS(S.exam);if(t.checked)d[t.dataset.lab]=1;else delete d[t.dataset.lab];writeLS(S.exam,d);const lid=t.dataset.lab;render();const el=app.querySelector('[data-lab="'+lid+'"]');if(el)el.focus();return}
   if(t.id==='imp'){
     const f=t.files&&t.files[0];if(!f)return;
     if(f.size>2000000){S.msg='That file is too large to be a progress backup.';render();return}
